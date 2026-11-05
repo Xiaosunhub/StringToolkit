@@ -1,0 +1,1067 @@
+#include "method.h"
+#include "utf8.h"
+#include <fstream>
+#include <iterator>
+#include <random>
+
+void sp::reverse_string(Twine& str)
+{
+	str.reverse();
+}
+
+void sp::reverse_string_to(Twine& str, Twine& result)
+{
+	result = str;
+	result.reverse();
+}
+
+void sp::reverse_string_to(Twine&& str, Twine& result) noexcept
+{
+	result = std::move(str);
+	result.reverse();
+}
+
+void sp::copy_to(Twine& str, Twine& result)
+{
+	result = str;
+}
+
+void sp::copy_to(Twine&& str, Twine& result) noexcept
+{
+	result = std::move(str);
+}
+
+void sp::move_to(Twine& str, Twine& result)
+{
+	result = std::move(str);
+	str.reset();
+}
+
+void sp::move_to(Twine&& str, Twine& result) noexcept
+{
+	result = std::exchange(str, Twine{});
+}
+
+void sp::fill_with(Twine& str, char ch)
+{
+	str.reset(std::string(str.size(), ch));
+}
+
+void sp::fill(Twine& str, char ch, std::size_t count)
+{
+	str.reset(std::string(count, ch));
+}
+
+void sp::remove_prefix(Twine& str, const Twine& prefix)
+{
+	str.remove_prefix(prefix);
+}
+
+void sp::remove_suffix(Twine& str, const Twine& suffix)
+{
+	str.remove_suffix(suffix);
+}
+
+sp::Twine sp::join(const std::vector<Twine>& parts, const Twine& separator)
+{
+	Twine result;
+
+	for (std::size_t i = 0; i < parts.size(); ++i)
+	{
+		if (i != 0)
+			result += separator;
+
+		result += parts[i];
+	}
+
+	return result;
+}
+
+sp::Twine sp::join(const std::vector<Twine>& parts, char separator)
+{
+	return sp::join(parts, Twine(String(1, separator)));
+}
+
+std::vector<sp::Twine> sp::split_lines(const Twine& str)
+{
+	std::vector<Twine> lines;
+
+	const String& src = str.s_str();
+	std::size_t start = 0;
+	std::size_t i = 0;
+
+	while (i < src.size())
+	{
+		const char c = src[i];
+
+		if (c == '\n' || c == '\r')
+		{
+			lines.emplace_back(src.substr(start, i - start));
+
+			if (c == '\r' && i + 1 < src.size() && src[i + 1] == '\n')
+				++i;
+
+			start = i + 1;
+		}
+
+		++i;
+	}
+
+	if (start < src.size())
+		lines.emplace_back(src.substr(start));
+
+	return lines;
+}
+
+void sp::pad_left(Twine& str, std::size_t width, char fill)
+{
+	const std::size_t count = utf8::length(str);
+	if (count >= width)
+		return;
+
+	str.insert(0, String(count < width ? width - count : 0, fill));
+}
+
+void sp::pad_right(Twine& str, std::size_t width, char fill)
+{
+	const std::size_t count = utf8::length(str);
+	if (count >= width)
+		return;
+
+	str.append(width - count, fill);
+}
+
+void sp::capitalize(Twine& str)
+{
+	if (str.empty())
+		return;
+
+	String& data = str.get_changable_string();
+
+	data[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(data[0])));
+
+	for (std::size_t i = 1; i < data.size(); ++i)
+		data[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(data[i])));
+}
+
+void sp::swap_case(Twine& str)
+{
+	String& data = str.get_changable_string();
+
+	for (auto& ch : data)
+	{
+		const unsigned char c = static_cast<unsigned char>(ch);
+
+		if (std::islower(c))
+			ch = static_cast<char>(std::toupper(c));
+		else if (std::isupper(c))
+			ch = static_cast<char>(std::tolower(c));
+	}
+}
+
+void sp::replace_first(Twine& str, const Twine& from, const Twine& to)
+{
+	if (from.empty())
+		throw sp::Invalid_Argument("The substring to replace cannot be empty.");
+
+	const auto pos = str.find(from);
+
+	if (pos != Twine::npos)
+		str.replace(pos, from.size(), to);
+}
+
+sp::Twine sp::read_file(const String& path)
+{
+	std::ifstream stream(path, std::ios::binary);
+
+	if (!stream.is_open())
+		throw sp::Invalid_Operation("Cannot open file for reading: " + path);
+
+	String data((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+
+	return Twine(std::move(data));
+}
+
+std::vector<sp::Twine> sp::read_lines(const String& path)
+{
+	return sp::split_lines(sp::read_file(path));
+}
+
+void sp::write_file(const String& path, const Twine& data, bool append)
+{
+	std::ofstream stream(
+		path,
+		std::ios::binary | (append ? std::ios::app : std::ios::trunc)
+	);
+
+	if (!stream.is_open())
+		throw sp::Invalid_Operation("Cannot open file for writing: " + path);
+
+	stream.write(data.data(), static_cast<std::streamsize>(data.size()));
+
+	if (!stream)
+		throw sp::Invalid_Operation("Failed while writing file: " + path);
+}
+
+// ---- random ----
+
+sp::Twine sp::generate_random(std::size_t length, const Twine& charset)
+{
+	const String& chars = charset.s_str();
+
+	if (chars.empty())
+		throw sp::Invalid_Argument("Charset cannot be empty in generate_random.");
+
+	static thread_local std::mt19937 generator{ std::random_device{}() };
+
+	std::uniform_int_distribution<std::size_t> pick(0, chars.size() - 1);
+
+	String result;
+	result.reserve(length);
+
+	for (std::size_t i = 0; i < length; ++i)
+		result += chars[pick(generator)];
+
+	return Twine(std::move(result));
+}
+
+// ---- case-insensitive conveniences (ASCII only) ----
+
+namespace
+{
+	String to_lower_ascii(String s)
+	{
+		for (auto& c : s)
+			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+		return s;
+	}
+}
+
+bool sp::icontains(const Twine& str, const Twine& sub)
+{
+	const String haystack = to_lower_ascii(str.s_str());
+	const String needle = to_lower_ascii(sub.s_str());
+
+	return haystack.find(needle) != String::npos;
+}
+
+bool sp::istarts_with(const Twine& str, const Twine& prefix)
+{
+	const String haystack = to_lower_ascii(str.s_str());
+	const String needle = to_lower_ascii(prefix.s_str());
+
+	return haystack.starts_with(needle);
+}
+
+bool sp::iends_with(const Twine& str, const Twine& suffix)
+{
+	const String haystack = to_lower_ascii(str.s_str());
+	const String needle = to_lower_ascii(suffix.s_str());
+
+	return haystack.ends_with(needle);
+}
+
+// ---- splitting ----
+
+std::vector<sp::Twine> sp::split_by_any(const Twine& str, const Twine& delimiters)
+{
+	const String& src = str.s_str();
+	const String& delims = delimiters.s_str();
+
+	if (delims.empty())
+		throw sp::Invalid_Argument("Delimiters cannot be empty in split_by_any.");
+
+	std::vector<Twine> fields;
+
+	std::size_t start = 0;
+
+	while (true)
+	{
+		const std::size_t end = src.find_first_of(delims, start);
+
+		if (end == String::npos)
+		{
+			fields.emplace_back(src.substr(start));
+			break;
+		}
+
+		fields.emplace_back(src.substr(start, end - start));
+		start = end + 1;
+	}
+
+	// A trailing delimiter produces no trailing empty field.
+	if (!fields.empty() && fields.back().empty() && !src.empty()
+		&& delims.find(src.back()) != String::npos)
+	{
+		fields.pop_back();
+	}
+
+	return fields;
+}
+
+// ---- pattern matching ----
+
+bool sp::wildcard_match(const Twine& str, const Twine& pattern)
+{
+	const String& s = str.s_str();
+	const String& p = pattern.s_str();
+
+	std::size_t si = 0, pi = 0;
+	std::size_t star = String::npos, mark = 0;
+
+	while (si < s.size())
+	{
+		if (pi < p.size() && (p[pi] == '?' || p[pi] == s[si]))
+		{
+			++si;
+			++pi;
+		}
+		else if (pi < p.size() && p[pi] == '*')
+		{
+			star = pi++;
+			mark = si;
+		}
+		else if (star != String::npos)
+		{
+			pi = star + 1;
+			si = ++mark;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	while (pi < p.size() && p[pi] == '*')
+		++pi;
+
+	return pi == p.size();
+}
+
+// ---- case style conversions ----
+
+namespace
+{
+	bool is_separator(char c)
+	{
+		return c == ' ' || c == '-' || c == '_';
+	}
+
+	// Word boundaries: separators, or an uppercase letter that follows a lowercase letter or digit.
+	std::vector<String> split_words(const String& src)
+	{
+		std::vector<String> words;
+		String current;
+
+		for (std::size_t i = 0; i < src.size(); ++i)
+		{
+			const char c = src[i];
+
+			if (is_separator(c))
+			{
+				if (!current.empty())
+				{
+					words.push_back(std::move(current));
+					current.clear();
+				}
+				continue;
+			}
+
+			const bool boundary =
+				std::isupper(static_cast<unsigned char>(c))
+				&& !current.empty()
+				&& (std::islower(static_cast<unsigned char>(current.back()))
+					|| std::isdigit(static_cast<unsigned char>(current.back())));
+
+			if (boundary)
+			{
+				words.push_back(std::move(current));
+				current.clear();
+			}
+
+			current += c;
+		}
+
+		if (!current.empty())
+			words.push_back(std::move(current));
+
+		return words;
+	}
+}
+
+void sp::to_snake_case(Twine& str)
+{
+	const auto words = split_words(str.s_str());
+
+	String result;
+
+	for (std::size_t i = 0; i < words.size(); ++i)
+	{
+		if (i > 0)
+			result += '_';
+
+		result += to_lower_ascii(words[i]);
+	}
+
+	str = Twine(std::move(result));
+}
+
+void sp::to_kebab_case(Twine& str)
+{
+	const auto words = split_words(str.s_str());
+
+	String result;
+
+	for (std::size_t i = 0; i < words.size(); ++i)
+	{
+		if (i > 0)
+			result += '-';
+
+		result += to_lower_ascii(words[i]);
+	}
+
+	str = Twine(std::move(result));
+}
+
+void sp::to_camel_case(Twine& str)
+{
+	const auto words = split_words(str.s_str());
+
+	String result;
+
+	for (std::size_t i = 0; i < words.size(); ++i)
+	{
+		String word = to_lower_ascii(words[i]);
+
+		if (i > 0 && !word.empty())
+			word[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(word[0])));
+
+		result += word;
+	}
+
+	str = Twine(std::move(result));
+}
+
+// ---- JSON ----
+
+sp::Twine sp::json::escape(const Twine& text)
+{
+	static const char* const HEX = "0123456789abcdef";
+
+	String result;
+	result.reserve(text.size() + 2);
+
+	for (const char c : text.s_str())
+	{
+		const unsigned char uc = static_cast<unsigned char>(c);
+
+		switch (c)
+		{
+		case '"':  result += "\\\""; continue;
+		case '\\': result += "\\\\"; continue;
+		case '\b': result += "\\b";  continue;
+		case '\f': result += "\\f";  continue;
+		case '\n': result += "\\n";  continue;
+		case '\r': result += "\\r";  continue;
+		case '\t': result += "\\t";  continue;
+		default: break;
+		}
+
+		if (uc < 0x20)
+		{
+			result += "\\u00";
+			result += HEX[(uc >> 4) & 0xF];
+			result += HEX[uc & 0xF];
+		}
+		else
+		{
+			result += c;
+		}
+	}
+
+	return Twine(std::move(result));
+}
+
+namespace
+{
+	// Decode one \uXXXX sequence starting at src[i] (i points at 'u').
+	// Returns the code unit and advances i past the 4 hex digits.
+	unsigned json_hex4(const String& src, std::size_t& i)
+	{
+		if (i + 4 >= src.size())
+			throw sp::Invalid_Conversion("Truncated \\u escape in json::unescape.");
+
+		unsigned value = 0;
+
+		for (int k = 0; k < 4; ++k)
+		{
+			const char c = src[++i];
+			unsigned digit;
+
+			if (c >= '0' && c <= '9')      digit = static_cast<unsigned>(c - '0');
+			else if (c >= 'a' && c <= 'f') digit = static_cast<unsigned>(c - 'a' + 10);
+			else if (c >= 'A' && c <= 'F') digit = static_cast<unsigned>(c - 'A' + 10);
+			else
+				throw sp::Invalid_Conversion("Invalid hex digit in \\u escape in json::unescape.");
+
+			value = (value << 4) | digit;
+		}
+
+		return value;
+	}
+
+	void append_utf8(String& out, unsigned codepoint)
+	{
+		if (codepoint <= 0x7F)
+		{
+			out += static_cast<char>(codepoint);
+		}
+		else if (codepoint <= 0x7FF)
+		{
+			out += static_cast<char>(0xC0 | (codepoint >> 6));
+			out += static_cast<char>(0x80 | (codepoint & 0x3F));
+		}
+		else if (codepoint <= 0xFFFF)
+		{
+			out += static_cast<char>(0xE0 | (codepoint >> 12));
+			out += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+			out += static_cast<char>(0x80 | (codepoint & 0x3F));
+		}
+		else
+		{
+			out += static_cast<char>(0xF0 | (codepoint >> 18));
+			out += static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
+			out += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+			out += static_cast<char>(0x80 | (codepoint & 0x3F));
+		}
+	}
+}
+
+sp::Twine sp::json::unescape(const Twine& text)
+{
+	const String& src = text.s_str();
+
+	String result;
+	result.reserve(src.size());
+
+	for (std::size_t i = 0; i < src.size(); ++i)
+	{
+		if (src[i] != '\\')
+		{
+			result += src[i];
+			continue;
+		}
+
+		if (++i >= src.size())
+			throw sp::Invalid_Conversion("Trailing backslash in json::unescape.");
+
+		switch (src[i])
+		{
+		case '"':  result += '"';  break;
+		case '\\': result += '\\'; break;
+		case '/':  result += '/';  break;
+		case 'b':  result += '\b'; break;
+		case 'f':  result += '\f'; break;
+		case 'n':  result += '\n'; break;
+		case 'r':  result += '\r'; break;
+		case 't':  result += '\t'; break;
+		case 'u':
+		{
+			unsigned cp = json_hex4(src, i);
+
+			if (cp >= 0xD800 && cp <= 0xDBFF) // high surrogate
+			{
+				if (i + 6 >= src.size() || src[i + 1] != '\\' || src[i + 2] != 'u')
+					throw sp::Invalid_Conversion("Unpaired high surrogate in json::unescape.");
+
+				i += 2;
+
+				const unsigned low = json_hex4(src, i);
+
+				if (low < 0xDC00 || low > 0xDFFF)
+					throw sp::Invalid_Conversion("Invalid low surrogate in json::unescape.");
+
+				cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00);
+			}
+			else if (cp >= 0xDC00 && cp <= 0xDFFF)
+			{
+				throw sp::Invalid_Conversion("Unpaired low surrogate in json::unescape.");
+			}
+
+			append_utf8(result, cp);
+			break;
+		}
+		default:
+			throw sp::Invalid_Conversion("Unknown escape sequence in json::unescape.");
+		}
+	}
+
+	return Twine(std::move(result));
+}
+
+// ---- CSV ----
+
+sp::Twine sp::csv::escape(const Twine& field)
+{
+	const String& src = field.s_str();
+
+	const bool needs_quotes =
+		src.find_first_of(",\"\r\n") != String::npos;
+
+	if (!needs_quotes)
+		return field;
+
+	String result;
+	result.reserve(src.size() + 2);
+
+	result += '"';
+
+	for (const char c : src)
+	{
+		if (c == '"')
+			result += '"';
+
+		result += c;
+	}
+
+	result += '"';
+
+	return Twine(std::move(result));
+}
+
+std::vector<sp::Twine> sp::csv::split(const Twine& line)
+{
+	const String& src = line.s_str();
+
+	std::vector<Twine> fields;
+
+	std::size_t i = 0;
+
+	while (true)
+	{
+		String field;
+
+		if (i < src.size() && src[i] == '"') // quoted field
+		{
+			++i;
+
+			while (true)
+			{
+				if (i >= src.size())
+					throw sp::Invalid_Conversion("Unterminated quoted field in csv::split.");
+
+				if (src[i] == '"')
+				{
+					if (i + 1 < src.size() && src[i + 1] == '"') // doubled quote
+					{
+						field += '"';
+						i += 2;
+						continue;
+					}
+
+					++i;
+					break;
+				}
+
+				field += src[i++];
+			}
+
+			if (i < src.size() && src[i] != ',')
+				throw sp::Invalid_Conversion("Unexpected characters after closing quote in csv::split.");
+		}
+		else // bare field
+		{
+			while (i < src.size() && src[i] != ',')
+				field += src[i++];
+		}
+
+		fields.emplace_back(std::move(field));
+
+		if (i >= src.size())
+			break;
+
+		++i; // skip comma
+	}
+
+	return fields;
+}
+
+// ---- statistics ----
+
+std::size_t sp::word_count(const Twine& str)
+{
+	std::size_t words = 0;
+	bool in_word = false;
+
+	for (const char c : str.s_str())
+	{
+		const bool space = std::isspace(static_cast<unsigned char>(c)) != 0;
+
+		if (space)
+		{
+			in_word = false;
+		}
+		else if (!in_word)
+		{
+			in_word = true;
+			++words;
+		}
+	}
+
+	return words;
+}
+
+std::size_t sp::levenshtein(const Twine& a, const Twine& b)
+{
+	const auto lhs = utf8::chars(a);
+	const auto rhs = utf8::chars(b);
+
+	const std::size_t m = lhs.size();
+	const std::size_t n = rhs.size();
+
+	if (m == 0) return n;
+	if (n == 0) return m;
+
+	std::vector<std::size_t> previous(n + 1);
+	std::vector<std::size_t> current(n + 1);
+
+	for (std::size_t j = 0; j <= n; ++j)
+		previous[j] = j;
+
+	for (std::size_t i = 1; i <= m; ++i)
+	{
+		current[0] = i;
+
+		for (std::size_t j = 1; j <= n; ++j)
+		{
+			const std::size_t cost = (lhs[i - 1] == rhs[j - 1]) ? 0 : 1;
+
+			current[j] = (std::min)({
+				previous[j] + 1,        // deletion
+				current[j - 1] + 1,     // insertion
+				previous[j - 1] + cost  // substitution
+			});
+		}
+
+		previous.swap(current);
+	}
+
+	return previous[n];
+}
+
+double sp::similarity(const Twine& a, const Twine& b)
+{
+	const std::size_t longest = (std::max)(utf8::length(a), utf8::length(b));
+
+	if (longest == 0)
+		return 1.0;
+
+	return 1.0 - static_cast<double>(levenshtein(a, b)) / static_cast<double>(longest);
+}
+
+sp::Twine sp::longest_common_prefix(const std::vector<Twine>& parts)
+{
+	if (parts.empty())
+		return Twine{};
+
+	const String* first = &parts.front().s_str();
+
+	std::size_t limit = first->size();
+
+	for (const auto& part : parts)
+		limit = (std::min)(limit, part.size());
+
+	std::size_t length = 0;
+
+	while (length < limit)
+	{
+		bool same = true;
+
+		for (std::size_t i = 1; i < parts.size(); ++i)
+		{
+			if (parts[i].s_str()[length] != (*first)[length])
+			{
+				same = false;
+				break;
+			}
+		}
+
+		if (!same)
+			break;
+
+		++length;
+	}
+
+	// Never cut in the middle of a UTF-8 sequence.
+	while (length > 0 && length < first->size()
+		&& (static_cast<unsigned char>((*first)[length]) & 0xC0) == 0x80)
+	{
+		--length;
+	}
+
+	return Twine{ first->substr(0, length) };
+}
+
+// ---- layout ----
+
+std::vector<sp::Twine> sp::wrap(const Twine& str, std::size_t width)
+{
+	if (width == 0)
+		throw sp::Invalid_Argument("Width must be greater than zero in wrap.");
+
+	std::vector<Twine> lines;
+
+	for (const auto& line : split_lines(str))
+	{
+		if (line.empty())
+		{
+			lines.emplace_back();
+			continue;
+		}
+
+		Twine current;
+		std::size_t current_width = 0;
+
+		for (const auto& word : line.split(' '))
+		{
+			const std::size_t word_width = utf8::length(word);
+
+			if (current.empty())
+			{
+				current = word;
+				current_width = word_width;
+			}
+			else if (current_width + 1 + word_width <= width)
+			{
+				current += ' ';
+				current += word;
+				current_width += 1 + word_width;
+			}
+			else
+			{
+				lines.push_back(current);
+				current = word;
+				current_width = word_width;
+			}
+		}
+
+		if (!current.empty())
+			lines.push_back(current);
+	}
+
+	return lines;
+}
+
+void sp::indent(Twine& str, const Twine& prefix)
+{
+	const auto lines = split_lines(str);
+
+	String result;
+
+	for (std::size_t i = 0; i < lines.size(); ++i)
+	{
+		if (i > 0)
+			result += '\n';
+
+		if (!lines[i].empty())
+			result += prefix.s_str();
+
+		result += lines[i].s_str();
+	}
+
+	str = Twine(std::move(result));
+}
+
+sp::Twine sp::thousands_sep(long long value, char sep)
+{
+	const bool negative = value < 0;
+	const unsigned long long magnitude = negative
+		? 0ULL - static_cast<unsigned long long>(value)
+		: static_cast<unsigned long long>(value);
+
+	String digits = std::to_string(magnitude);
+	String grouped;
+
+	int counter = 0;
+
+	for (auto it = digits.rbegin(); it != digits.rend(); ++it)
+	{
+		if (counter > 0 && counter % 3 == 0)
+			grouped += sep;
+
+		grouped += *it;
+		++counter;
+	}
+
+	std::ranges::reverse(grouped);
+
+	return Twine{ (negative ? String("-") : String()) + grouped };
+}
+
+sp::Twine sp::human_size(unsigned long long bytes)
+{
+	static constexpr const char* UNITS[] = { "B", "KB", "MB", "GB", "TB", "PB" };
+
+	if (bytes < 1024)
+		return Twine{ std::to_string(bytes) + " B" };
+
+	double value = static_cast<double>(bytes);
+	std::size_t unit = 0;
+
+	while (value >= 1024.0 && unit + 1 < std::size(UNITS))
+	{
+		value /= 1024.0;
+		++unit;
+	}
+
+	Twine number{ std::format("{:.1f}", value) };
+
+	if (number.endsWith(".0"))
+		number.resize(number.size() - 2);
+
+	return Twine{ number.s_str() + " " + UNITS[unit] };
+}
+
+sp::Twine sp::render(const Twine& tmpl, const std::map<Twine, Twine>& vars)
+{
+	const String& src = tmpl.s_str();
+
+	String result;
+
+	std::size_t pos = 0;
+
+	while (pos < src.size())
+	{
+		const std::size_t open = src.find("{{", pos);
+
+		if (open == String::npos)
+		{
+			result += src.substr(pos);
+			break;
+		}
+
+		const std::size_t close = src.find("}}", open + 2);
+
+		if (close == String::npos)
+		{
+			result += src.substr(pos);
+			break;
+		}
+
+		result += src.substr(pos, open - pos);
+
+		const String key = src.substr(open + 2, close - (open + 2));
+		const auto it = vars.find(Twine{ key });
+
+		if (it != vars.end())
+			result += it->second.s_str();
+		else
+			result += src.substr(open, close + 2 - open); // leave unknown placeholders intact
+
+		pos = close + 2;
+	}
+
+	return Twine(std::move(result));
+}
+
+std::pair<sp::Twine, sp::Twine> sp::split_pair(
+	const Twine& str, const Twine& delimiter, bool first)
+{
+	if (delimiter.empty())
+		throw sp::Invalid_Argument("Delimiter cannot be empty in split_pair.");
+
+	const std::size_t pos = first ? str.find(delimiter) : str.rfind(delimiter);
+
+	if (pos == Twine::npos)
+		return { str, Twine{} };
+
+	return {
+		str.substr(0, pos),
+		str.substr(pos + delimiter.size())
+	};
+}
+
+// ---- convenience ----
+
+void sp::truncate(Twine& str, std::size_t max_chars, const Twine& ellipsis)
+{
+	const std::size_t length = utf8::length(str);
+
+	if (length <= max_chars)
+		return;
+
+	const std::size_t ellipsis_len = utf8::length(ellipsis);
+
+	if (max_chars <= ellipsis_len)
+	{
+		str = utf8::sub(str, 0, max_chars);
+		return;
+	}
+
+	str = utf8::sub(str, 0, max_chars - ellipsis_len) + ellipsis;
+}
+
+void sp::slug(Twine& str)
+{
+	String result;
+	result.reserve(str.size());
+
+	bool last_was_dash = true; // treat the start as a dash to trim leading separators
+
+	for (const char c : str.s_str())
+	{
+		const unsigned char uc = static_cast<unsigned char>(c);
+
+		if (std::isalnum(uc))
+		{
+			result += static_cast<char>(std::tolower(uc));
+			last_was_dash = false;
+		}
+		else if ((c == ' ' || c == '_' || c == '-') && !last_was_dash)
+		{
+			result += '-';
+			last_was_dash = true;
+		}
+		// every other character is dropped
+	}
+
+	while (!result.empty() && result.back() == '-')
+		result.pop_back();
+
+	str = Twine(std::move(result));
+}
+
+std::vector<sp::Twine> sp::chunk(const Twine& str, std::size_t size)
+{
+	if (size == 0)
+		throw sp::Invalid_Argument("Chunk size must be greater than zero in chunk.");
+
+	const std::size_t length = utf8::length(str);
+
+	std::vector<Twine> chunks;
+	chunks.reserve((length + size - 1) / size);
+
+	for (std::size_t start = 0; start < length; start += size)
+		chunks.push_back(utf8::sub(str, start, (std::min)(size, length - start)));
+
+	return chunks;
+}
+
+bool sp::to_bool(const Twine& str)
+{
+	String lower = str.s_str();
+	std::ranges::transform(lower, lower.begin(), [](char c) {
+		return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+	});
+
+	if (lower == "true" || lower == "1" || lower == "yes"
+		|| lower == "on" || lower == "y" || lower == "t")
+		return true;
+
+	if (lower == "false" || lower == "0" || lower == "no"
+		|| lower == "off" || lower == "n" || lower == "f")
+		return false;
+
+	throw sp::Invalid_Conversion("Cannot convert string to bool in to_bool.");
+}

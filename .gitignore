@@ -1,0 +1,16 @@
+# Build outputs
+x64/
+*.obj
+*.exe
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# WorkBuddy AI session data
+.workbuddy/
