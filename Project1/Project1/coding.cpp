@@ -39,11 +39,11 @@ namespace
 	}
 }
 
-sp::Twine sp::coding::toBase64(const Twine& data)
+sp::StringToolkit sp::coding::toBase64(const StringToolkit& data)
 {
 	const String& src = data.s_str();
 
-	Twine result;
+	StringToolkit result;
 	result.reserve(((src.size() + 2) / 3) * 4);
 
 	std::size_t i = 0;
@@ -88,7 +88,7 @@ sp::Twine sp::coding::toBase64(const Twine& data)
 	return result;
 }
 
-sp::Twine sp::coding::fromBase64(const Twine& text)
+sp::StringToolkit sp::coding::fromBase64(const StringToolkit& text)
 {
 	const String& src = text.s_str();
 
@@ -122,14 +122,14 @@ sp::Twine sp::coding::fromBase64(const Twine& text)
 		}
 	}
 
-	return Twine(bytes);
+	return StringToolkit(bytes);
 }
 
-sp::Twine sp::coding::toHex(const Twine& data, bool uppercase)
+sp::StringToolkit sp::coding::toHex(const StringToolkit& data, bool uppercase)
 {
 	const String& src = data.s_str();
 
-	Twine result;
+	StringToolkit result;
 	result.reserve(src.size() * 2);
 
 	for (char raw : src)
@@ -142,7 +142,7 @@ sp::Twine sp::coding::toHex(const Twine& data, bool uppercase)
 	return result;
 }
 
-sp::Twine sp::coding::fromHex(const Twine& text)
+sp::StringToolkit sp::coding::fromHex(const StringToolkit& text)
 {
 	const String& src = text.s_str();
 
@@ -176,14 +176,14 @@ sp::Twine sp::coding::fromHex(const Twine& text)
 	if (high >= 0)
 		throw sp::Invalid_Conversion("Odd number of hex digits in fromHex.");
 
-	return Twine(bytes);
+	return StringToolkit(bytes);
 }
 
-sp::Twine sp::coding::urlEncode(const Twine& data)
+sp::StringToolkit sp::coding::urlEncode(const StringToolkit& data)
 {
 	const String& src = data.s_str();
 
-	Twine result;
+	StringToolkit result;
 	result.reserve(src.size());
 
 	for (char raw : src)
@@ -205,7 +205,7 @@ sp::Twine sp::coding::urlEncode(const Twine& data)
 	return result;
 }
 
-sp::Twine sp::coding::urlDecode(const Twine& text)
+sp::StringToolkit sp::coding::urlDecode(const StringToolkit& text)
 {
 	const String& src = text.s_str();
 
@@ -240,7 +240,7 @@ sp::Twine sp::coding::urlDecode(const Twine& text)
 		}
 	}
 
-	return Twine(bytes);
+	return StringToolkit(bytes);
 }
 
 namespace
@@ -251,12 +251,12 @@ namespace
 	}
 }
 
-bool sp::coding::is_binary(const Twine& text) noexcept
+bool sp::coding::is_binary(const StringToolkit& text) noexcept
 {
 	return all_digits_in(text.s_str(), "01");
 }
 
-sp::Twine sp::coding::toBinary(const Twine& data)
+sp::StringToolkit sp::coding::toBinary(const StringToolkit& data)
 {
 	String bits;
 	bits.reserve(data.size() * 8);
@@ -269,10 +269,10 @@ sp::Twine sp::coding::toBinary(const Twine& data)
 			bits += static_cast<char>('0' + ((byte >> shift) & 1));
 	}
 
-	return Twine(std::move(bits));
+	return StringToolkit(std::move(bits));
 }
 
-sp::Twine sp::coding::fromBinary(const Twine& text)
+sp::StringToolkit sp::coding::fromBinary(const StringToolkit& text)
 {
 	const String& src = text.s_str();
 
@@ -295,15 +295,15 @@ sp::Twine sp::coding::fromBinary(const Twine& text)
 		bytes += static_cast<char>(byte);
 	}
 
-	return Twine(std::move(bytes));
+	return StringToolkit(std::move(bytes));
 }
 
-bool sp::coding::is_octal(const Twine& text) noexcept
+bool sp::coding::is_octal(const StringToolkit& text) noexcept
 {
 	return all_digits_in(text.s_str(), "01234567");
 }
 
-sp::Twine sp::coding::toOctal(const Twine& data)
+sp::StringToolkit sp::coding::toOctal(const StringToolkit& data)
 {
 	String digits;
 	digits.reserve(data.size() * 3);
@@ -317,10 +317,10 @@ sp::Twine sp::coding::toOctal(const Twine& data)
 		digits += static_cast<char>('0' + (byte & 7));
 	}
 
-	return Twine(std::move(digits));
+	return StringToolkit(std::move(digits));
 }
 
-sp::Twine sp::coding::fromOctal(const Twine& text)
+sp::StringToolkit sp::coding::fromOctal(const StringToolkit& text)
 {
 	const String& src = text.s_str();
 
@@ -341,16 +341,16 @@ sp::Twine sp::coding::fromOctal(const Twine& text)
 		bytes += static_cast<char>(byte);
 	}
 
-	return Twine(std::move(bytes));
+	return StringToolkit(std::move(bytes));
 }
 
-sp::Twine sp::coding::toBase(unsigned long long value, unsigned base)
+sp::StringToolkit sp::coding::toBase(unsigned long long value, unsigned base)
 {
 	if (base < 2 || base > 36)
 		throw sp::Invalid_Argument("Base must be between 2 and 36 in toBase.");
 
 	if (value == 0)
-		return Twine{ "0" };
+		return StringToolkit{ "0" };
 
 	static constexpr char DIGITS[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -364,10 +364,10 @@ sp::Twine sp::coding::toBase(unsigned long long value, unsigned base)
 
 	std::ranges::reverse(result);
 
-	return Twine(std::move(result));
+	return StringToolkit(std::move(result));
 }
 
-long long sp::coding::fromBase(const Twine& text, unsigned base)
+long long sp::coding::fromBase(const StringToolkit& text, unsigned base)
 {
 	if (base < 2 || base > 36)
 		throw sp::Invalid_Argument("Base must be between 2 and 36 in fromBase.");
@@ -423,4 +423,103 @@ long long sp::coding::fromBase(const Twine& text, unsigned base)
 		return static_cast<long long>(0ULL - value);
 
 	return static_cast<long long>(value);
+}
+
+namespace
+{
+	constexpr char BASE64URL_ALPHABET[] =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+	int base64url_value(unsigned char c)
+	{
+		if (c >= 'A' && c <= 'Z') return c - 'A';
+		if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+		if (c >= '0' && c <= '9') return c - '0' + 52;
+		if (c == '-')              return 62;
+		if (c == '_')              return 63;
+		return -1;
+	}
+}
+
+sp::StringToolkit sp::coding::toBase64Url(const StringToolkit& data)
+{
+	const String& src = data.s_str();
+
+	StringToolkit result;
+	result.reserve((src.size() * 8 + 5) / 6);
+
+	std::size_t i = 0;
+	while (i + 2 < src.size())
+	{
+		const unsigned block =
+			(static_cast<unsigned char>(src[i]) << 16) |
+			(static_cast<unsigned char>(src[i + 1]) << 8) |
+			(static_cast<unsigned char>(src[i + 2]));
+
+		result += BASE64URL_ALPHABET[(block >> 18) & 0x3F];
+		result += BASE64URL_ALPHABET[(block >> 12) & 0x3F];
+		result += BASE64URL_ALPHABET[(block >> 6) & 0x3F];
+		result += BASE64URL_ALPHABET[block & 0x3F];
+
+		i += 3;
+	}
+
+	const std::size_t rest = src.size() - i;
+
+	if (rest == 1)
+	{
+		const unsigned block = static_cast<unsigned char>(src[i]) << 16;
+
+		result += BASE64URL_ALPHABET[(block >> 18) & 0x3F];
+		result += BASE64URL_ALPHABET[(block >> 12) & 0x3F];
+	}
+	else if (rest == 2)
+	{
+		const unsigned block =
+			(static_cast<unsigned char>(src[i]) << 16) |
+			(static_cast<unsigned char>(src[i + 1]) << 8);
+
+		result += BASE64URL_ALPHABET[(block >> 18) & 0x3F];
+		result += BASE64URL_ALPHABET[(block >> 12) & 0x3F];
+		result += BASE64URL_ALPHABET[(block >> 6) & 0x3F];
+	}
+
+	return result;
+}
+
+sp::StringToolkit sp::coding::fromBase64Url(const StringToolkit& text)
+{
+	String src = text.s_str();
+
+	// Tolerate optional padding, then validate the length class.
+	while (!src.empty() && src.back() == '=')
+		src.pop_back();
+
+	if (src.size() % 4 == 1)
+		throw sp::Invalid_Conversion("Invalid base64url length in fromBase64Url.");
+
+	StringToolkit result;
+	result.reserve((src.size() * 6) / 8);
+
+	unsigned accumulator = 0;
+	int bits = 0;
+
+	for (const char ch : src)
+	{
+		const int value = base64url_value(static_cast<unsigned char>(ch));
+
+		if (value < 0)
+			throw sp::Invalid_Conversion("Invalid character in base64url text in fromBase64Url.");
+
+		accumulator = (accumulator << 6) | static_cast<unsigned>(value);
+		bits += 6;
+
+		if (bits >= 8)
+		{
+			bits -= 8;
+			result += static_cast<char>((accumulator >> bits) & 0xFF);
+		}
+	}
+
+	return result;
 }

@@ -21,7 +21,7 @@
 #ifndef __INC_PATH_H__
 #define __INC_PATH_H__
 
-#include "Twine.h"
+#include "StringToolkit.h"
 
 namespace sp
 {
@@ -30,28 +30,28 @@ namespace sp
 	namespace path
 	{
 		// Join base and child. An absolute child replaces base entirely.
-		Twine join(const Twine& base, const Twine& child);
+		StringToolkit join(const StringToolkit& base, const StringToolkit& child);
 
 		// Collapse duplicate separators and resolve "." / ".." segments.
 		// Keeps a drive prefix ("C:"), a leading "/" or a UNC "//server" prefix.
 		// Returns "." for an empty path.
-		Twine normalize(const Twine& p);
+		StringToolkit normalize(const StringToolkit& p);
 
 		// Last component: "a/b/c.txt" -> "c.txt"; a trailing separator is ignored.
-		Twine filename(const Twine& p);
+		StringToolkit filename(const StringToolkit& p);
 
 		// Filename without its last extension: "a/b/c.tar.gz" -> "c.tar";
 		// a leading dot is not an extension (".gitignore" -> ".gitignore").
-		Twine stem(const Twine& p);
+		StringToolkit stem(const StringToolkit& p);
 
 		// Last extension including the dot, or "" when there is none.
-		Twine extension(const Twine& p);
+		StringToolkit extension(const StringToolkit& p);
 
 		// Directory part: "a/b/c.txt" -> "a/b"; "/a" -> "/"; "a" -> ".";
-		Twine parent(const Twine& p);
+		StringToolkit parent(const StringToolkit& p);
 
 		// True for "/x", "\\x", "C:/x", "C:x" and "//server/share".
-		bool is_absolute(const Twine& p) noexcept;
+		bool is_absolute(const StringToolkit& p) noexcept;
 	}
 }
 

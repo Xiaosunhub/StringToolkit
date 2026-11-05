@@ -28,7 +28,7 @@ namespace
 	}
 }
 
-bool sp::path::is_absolute(const Twine& p) noexcept
+bool sp::path::is_absolute(const StringToolkit& p) noexcept
 {
 	const String& s = p.s_str();
 
@@ -41,7 +41,7 @@ bool sp::path::is_absolute(const Twine& p) noexcept
 	return is_drive_prefix(s);
 }
 
-sp::Twine sp::path::join(const Twine& base, const Twine& child)
+sp::StringToolkit sp::path::join(const StringToolkit& base, const StringToolkit& child)
 {
 	if (child.empty())
 		return normalize(base);
@@ -49,7 +49,7 @@ sp::Twine sp::path::join(const Twine& base, const Twine& child)
 	if (base.empty() || is_absolute(child))
 		return normalize(child);
 
-	Twine result{ base };
+	StringToolkit result{ base };
 
 	if (!result.endsWith('/') && !result.endsWith('\\'))
 		result += '/';
@@ -59,12 +59,12 @@ sp::Twine sp::path::join(const Twine& base, const Twine& child)
 	return normalize(result);
 }
 
-sp::Twine sp::path::normalize(const Twine& p)
+sp::StringToolkit sp::path::normalize(const StringToolkit& p)
 {
 	String s = slashify(p.s_str());
 
 	if (s.empty())
-		return Twine{ "." };
+		return StringToolkit{ "." };
 
 	String prefix;      // "C:" for drives, "" otherwise
 	bool absolute = false;
@@ -132,18 +132,18 @@ sp::Twine sp::path::normalize(const Twine& p)
 	}
 
 	if (unc)
-		return Twine{ "//" + body };
+		return StringToolkit{ "//" + body };
 
 	if (absolute)
-		return Twine{ prefix + "/" + body };
+		return StringToolkit{ prefix + "/" + body };
 
 	if (body.empty())
-		return Twine{ "." };
+		return StringToolkit{ "." };
 
-	return Twine{ prefix + body };
+	return StringToolkit{ prefix + body };
 }
 
-sp::Twine sp::path::filename(const Twine& p)
+sp::StringToolkit sp::path::filename(const StringToolkit& p)
 {
 	String s = slashify(p.s_str());
 
@@ -152,34 +152,34 @@ sp::Twine sp::path::filename(const Twine& p)
 
 	const std::size_t sep = s.find_last_of('/');
 
-	return Twine{ sep == String::npos ? s : s.substr(sep + 1) };
+	return StringToolkit{ sep == String::npos ? s : s.substr(sep + 1) };
 }
 
-sp::Twine sp::path::extension(const Twine& p)
+sp::StringToolkit sp::path::extension(const StringToolkit& p)
 {
 	const String name = filename(p).s_str();
 	const std::size_t dot = name.find_last_of('.');
 
 	if (dot == String::npos || dot == 0)
-		return Twine{};
+		return StringToolkit{};
 
-	return Twine{ name.substr(dot) };
+	return StringToolkit{ name.substr(dot) };
 }
 
-sp::Twine sp::path::stem(const Twine& p)
+sp::StringToolkit sp::path::stem(const StringToolkit& p)
 {
 	const String name = filename(p).s_str();
 	const std::size_t dot = name.find_last_of('.');
 
 	if (dot == String::npos || dot == 0)
-		return Twine{ name };
+		return StringToolkit{ name };
 
-	return Twine{ name.substr(0, dot) };
+	return StringToolkit{ name.substr(0, dot) };
 }
 
-sp::Twine sp::path::parent(const Twine& p)
+sp::StringToolkit sp::path::parent(const StringToolkit& p)
 {
-	Twine normalized{ normalize(p) };
+	StringToolkit normalized{ normalize(p) };
 	const String& s = normalized.s_str();
 
 	// Already at a root: ".", "/", "//", "C:" or "C:/".
@@ -213,7 +213,7 @@ sp::Twine sp::path::parent(const Twine& p)
 	const std::size_t sep = body.find_last_of('/');
 
 	if (sep == String::npos)
-		return absolute ? Twine{ prefix + "/" } : Twine{ "." };
+		return absolute ? StringToolkit{ prefix + "/" } : StringToolkit{ "." };
 
-	return Twine{ prefix + (absolute ? "/" : "") + body.substr(0, sep) };
+	return StringToolkit{ prefix + (absolute ? "/" : "") + body.substr(0, sep) };
 }

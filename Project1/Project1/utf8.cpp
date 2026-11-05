@@ -13,7 +13,7 @@ namespace
 	}
 }
 
-bool sp::utf8::is_valid(const Twine& s)
+bool sp::utf8::is_valid(const StringToolkit& s)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -61,7 +61,7 @@ bool sp::utf8::is_valid(const Twine& s)
 	return true;
 }
 
-std::size_t sp::utf8::length(const Twine& s)
+std::size_t sp::utf8::length(const StringToolkit& s)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -76,7 +76,7 @@ std::size_t sp::utf8::length(const Twine& s)
 	return count;
 }
 
-std::size_t sp::utf8::offset(const Twine& s, std::size_t char_index)
+std::size_t sp::utf8::offset(const StringToolkit& s, std::size_t char_index)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -93,10 +93,10 @@ std::size_t sp::utf8::offset(const Twine& s, std::size_t char_index)
 		++count;
 	}
 
-	return (count == char_index) ? len : Twine::npos;
+	return (count == char_index) ? len : StringToolkit::npos;
 }
 
-sp::Twine sp::utf8::sub(const Twine& s, std::size_t start)
+sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start)
 {
 	if (s.is_empty())
 		throw sp::Empty_String("Cannot call utf8::sub on an empty string.");
@@ -109,10 +109,10 @@ sp::Twine sp::utf8::sub(const Twine& s, std::size_t start)
 	if (start == 0)
 		return s;
 
-	return Twine(s.s_str().substr(offset(s, start)));
+	return StringToolkit(s.s_str().substr(offset(s, start)));
 }
 
-sp::Twine sp::utf8::sub(const Twine& s, std::size_t start, std::size_t len)
+sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start, std::size_t len)
 {
 	if (s.is_empty())
 		throw sp::Empty_String("Cannot call utf8::sub on an empty string.");
@@ -123,7 +123,7 @@ sp::Twine sp::utf8::sub(const Twine& s, std::size_t start, std::size_t len)
 		throw sp::Index_Out_Of_Range("Start index out of range in utf8::sub.");
 
 	if (len == 0)
-		return Twine{};
+		return StringToolkit{};
 
 	if (start + len > count)
 		throw sp::Index_Out_Of_Range("Length exceeds string bounds in utf8::sub.");
@@ -131,12 +131,12 @@ sp::Twine sp::utf8::sub(const Twine& s, std::size_t start, std::size_t len)
 	const std::size_t start_byte = offset(s, start);
 	const std::size_t end_byte = offset(s, start + len);
 
-	return Twine(s.s_str().substr(start_byte, end_byte - start_byte));
+	return StringToolkit(s.s_str().substr(start_byte, end_byte - start_byte));
 }
 
-std::vector<sp::Twine> sp::utf8::chars(const Twine& s)
+std::vector<sp::StringToolkit> sp::utf8::chars(const StringToolkit& s)
 {
-	std::vector<Twine> result;
+	std::vector<StringToolkit> result;
 
 	const String& str = s.s_str();
 	std::size_t i = 0;
@@ -154,7 +154,7 @@ std::vector<sp::Twine> sp::utf8::chars(const Twine& s)
 	return result;
 }
 
-std::vector<char32_t> sp::utf8::codepoints(const Twine& s)
+std::vector<char32_t> sp::utf8::codepoints(const StringToolkit& s)
 {
 	std::vector<char32_t> result;
 
@@ -197,7 +197,7 @@ std::vector<char32_t> sp::utf8::codepoints(const Twine& s)
 	return result;
 }
 
-sp::Twine sp::utf8::from_codepoint(char32_t cp)
+sp::StringToolkit sp::utf8::from_codepoint(char32_t cp)
 {
 	String out;
 
@@ -231,10 +231,10 @@ sp::Twine sp::utf8::from_codepoint(char32_t cp)
 		throw sp::Invalid_Argument("Code point out of Unicode range.");
 	}
 
-	return Twine(out);
+	return StringToolkit(out);
 }
 
-sp::Twine sp::utf8::reverse(const Twine& s)
+sp::StringToolkit sp::utf8::reverse(const StringToolkit& s)
 {
 	auto parts = chars(s);
 	std::reverse(parts.begin(), parts.end());
@@ -243,5 +243,5 @@ sp::Twine sp::utf8::reverse(const Twine& s)
 	for (const auto& part : parts)
 		out += part.s_str();
 
-	return Twine(out);
+	return StringToolkit(out);
 }

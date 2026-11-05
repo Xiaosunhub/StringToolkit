@@ -1,12 +1,12 @@
 // ======================================================================
-//   _____  __        __  ___  _   _  _____
-//  |_   _| \ \      / / |_ _|| \ | || ____|
-//    | |    \ \ /\ / /   | | |  \| ||  _|
-//    | |     \ V  V /    | | | |\  || |___
-//    |_|      \_/\_/    |___||_| \_||_____|
+//   ____ _____ ____  ___ _   _  ____ _____ ___   ___  _    _  _____ _____
+//  / ___|_   _|  _ \|_ _| \ | |/ ___|_   _/ _ \ / _ \| |  | |/ _ \_   _|
+//  \___ \ | | | |_) || ||  \| | |  _  | || | | | | | | |  | ' /| | | | |
+//   ___) || | |  _ < | || |\  | |_| | | || |_| | |_| | |__| . \| |_| | |
+//  |____/ |_| |_| \_\___|_| \_|\____| |_| \___/ \___/|____|_|\_\___/ |_|
 //
-//  T W I N E  -  a C++ string utility library
-//  (formerly StringPlus)
+//  S T R I N G T O O L K I T  -  a C++ string utility library
+//  (formerly StringPlus / Twine)
 // ======================================================================
 //
 //
@@ -30,13 +30,13 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-#ifndef __INC_STRINGPLUS_H__
-#define __INC_STRINGPLUS_H__
+#ifndef __INC_STRINGTOOLKIT_H__
+#define __INC_STRINGTOOLKIT_H__
 
-#ifndef STRINGPLUS_EXPORT
-#define STRINGPLUS_EXPORT __declspec(dllexport)
+#ifndef STRINGTOOLKIT_EXPORT
+#define STRINGTOOLKIT_EXPORT __declspec(dllexport)
 #else
-#define STRINGPLUS_EXPORT __declspec(dllimport)
+#define STRINGTOOLKIT_EXPORT __declspec(dllimport)
 #endif
 
 #include <iostream>
@@ -66,11 +66,11 @@
 #include <limits>
 #include <fstream>
 
-template class STRINGPLUS_EXPORT std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
-template class STRINGPLUS_EXPORT std::basic_string_view<char, std::char_traits<char>>;
+template class STRINGTOOLKIT_EXPORT std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
+template class STRINGTOOLKIT_EXPORT std::basic_string_view<char, std::char_traits<char>>;
 
-template class STRINGPLUS_EXPORT std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>;
-template class STRINGPLUS_EXPORT std::basic_string_view<wchar_t, std::char_traits<wchar_t>>;
+template class STRINGTOOLKIT_EXPORT std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>;
+template class STRINGTOOLKIT_EXPORT std::basic_string_view<wchar_t, std::char_traits<wchar_t>>;
 
 
 using String = std::basic_string<char, std::char_traits<char>, std::allocator<char>>;
@@ -79,7 +79,7 @@ using String_view = std::basic_string_view<char, std::char_traits<char>>;
 
 namespace sp
 {
-    class [[nodiscard]] STRINGPLUS_EXPORT String_Error : public std::exception
+    class [[nodiscard]] STRINGTOOLKIT_EXPORT String_Error : public std::exception
     {
     private:
         String message;
@@ -91,49 +91,49 @@ namespace sp
         [[nodiscard]] const char* what() const noexcept override;
     };
 
-    class [[nodiscard]] STRINGPLUS_EXPORT Index_Out_Of_Range : public sp::String_Error
+    class [[nodiscard]] STRINGTOOLKIT_EXPORT Index_Out_Of_Range : public sp::String_Error
     {
     public:
         explicit Index_Out_Of_Range(const String& msg);
         explicit Index_Out_Of_Range(const char* msg);
     };
 
-    class [[nodiscard]] STRINGPLUS_EXPORT Empty_String : public sp::String_Error
+    class [[nodiscard]] STRINGTOOLKIT_EXPORT Empty_String : public sp::String_Error
     {
     public:
         explicit Empty_String(const String& msg);
         explicit Empty_String(const char* msg);
     };
 
-	class [[nodiscard]] STRINGPLUS_EXPORT Invalid_Operation : public sp::String_Error
+	class [[nodiscard]] STRINGTOOLKIT_EXPORT Invalid_Operation : public sp::String_Error
     {
     public:
         explicit Invalid_Operation(const String& msg);
         explicit Invalid_Operation(const char* msg);
 	};
 
-    class [[nodiscard]] STRINGPLUS_EXPORT Invalid_Conversion : public sp::String_Error
+    class [[nodiscard]] STRINGTOOLKIT_EXPORT Invalid_Conversion : public sp::String_Error
     {
     public:
         explicit Invalid_Conversion(const String& msg);
         explicit Invalid_Conversion(const char* msg);
     };
 
-	class [[nodiscard]] STRINGPLUS_EXPORT Invalid_Argument : public sp::String_Error
+	class [[nodiscard]] STRINGTOOLKIT_EXPORT Invalid_Argument : public sp::String_Error
     {
     public:
 		explicit Invalid_Argument(const String& msg);
 		explicit Invalid_Argument(const char* msg);
 	};
 
-    class [[nodiscard]] STRINGPLUS_EXPORT Invalid_Format : public sp::String_Error
+    class [[nodiscard]] STRINGTOOLKIT_EXPORT Invalid_Format : public sp::String_Error
     {
     public:
         explicit Invalid_Format(const String & msg);
         explicit Invalid_Format(const char* msg);
     };
 
-    class STRINGPLUS_EXPORT Twine
+    class STRINGTOOLKIT_EXPORT StringToolkit
     {
         String m_data{};
 
@@ -148,31 +148,31 @@ namespace sp
 
         static constexpr auto npos{ static_cast<size_type>(-1) };
 
-        friend std::istream& getline(std::istream& is, Twine& str, char delim);
+        friend std::istream& getline(std::istream& is, StringToolkit& str, char delim);
 
-        Twine();
-        Twine(const String& _data);
-        Twine(String&& _data);
-        Twine(const char* _data);
-        Twine(std::initializer_list<char> _data);
-        Twine(std::vector<char> _data);
-        Twine(std::set<char> _data);
-        Twine(const Twine& _data);
-        Twine(Twine&& _data) noexcept = default;
-        Twine(String s, size_type size);
-        template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> Twine(T num);
-        template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> Twine(T num, int precision);
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> Twine(std::vector<T> nums);
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> Twine(std::initializer_list<T> nums);
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> Twine(std::set<T> nums);
+        StringToolkit();
+        StringToolkit(const String& _data);
+        StringToolkit(String&& _data);
+        StringToolkit(const char* _data);
+        StringToolkit(std::initializer_list<char> _data);
+        StringToolkit(std::vector<char> _data);
+        StringToolkit(std::set<char> _data);
+        StringToolkit(const StringToolkit& _data);
+        StringToolkit(StringToolkit&& _data) noexcept = default;
+        StringToolkit(String s, size_type size);
+        template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> StringToolkit(T num);
+        template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> StringToolkit(T num, int precision);
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> StringToolkit(std::vector<T> nums);
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> StringToolkit(std::initializer_list<T> nums);
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>> StringToolkit(std::set<T> nums);
 
-        Twine& operator=(const Twine&)      = default;
-        Twine& operator=(Twine&&)           noexcept = default;
-        Twine& operator=(const String& s);
-        Twine& operator=(String&& s)             noexcept;
-        Twine& operator=(const char* cc);
+        StringToolkit& operator=(const StringToolkit&)      = default;
+        StringToolkit& operator=(StringToolkit&&)           noexcept = default;
+        StringToolkit& operator=(const String& s);
+        StringToolkit& operator=(String&& s)             noexcept;
+        StringToolkit& operator=(const char* cc);
 
-        Twine create_from_this()                 const;
+        StringToolkit create_from_this()                 const;
 
         const String& s_str()      const& noexcept;
         String&& s_str() &&        noexcept;
@@ -196,105 +196,105 @@ namespace sp
 
         void clear()                      noexcept;
 
-        Twine& insert(pos_type pos, const Twine& str);
-        Twine& insert(pos_type pos, const String& str);
-        Twine& insert(pos_type pos, const char* str);
-        Twine& insert(pos_type pos, char ch);
+        StringToolkit& insert(pos_type pos, const StringToolkit& str);
+        StringToolkit& insert(pos_type pos, const String& str);
+        StringToolkit& insert(pos_type pos, const char* str);
+        StringToolkit& insert(pos_type pos, char ch);
 
-        Twine& erase(pos_type pos = 0, pos_type count = npos);
+        StringToolkit& erase(pos_type pos = 0, pos_type count = npos);
 
-        Twine& assign(const Twine& str);
-        Twine& assign(const String& str);
-        Twine& assign(const char* str);
-        Twine& assign(pos_type count, char ch);
+        StringToolkit& assign(const StringToolkit& str);
+        StringToolkit& assign(const String& str);
+        StringToolkit& assign(const char* str);
+        StringToolkit& assign(pos_type count, char ch);
 
         void resize(size_type count);
         void resize(size_type count, char fill);
 
-        int compare(const Twine& rhs) const;
+        int compare(const StringToolkit& rhs) const;
         int compare(const String& rhs) const;
         int compare(const char* rhs) const;
 
-        pos_type rfind(const Twine& s, pos_type pos = npos) const noexcept;
+        pos_type rfind(const StringToolkit& s, pos_type pos = npos) const noexcept;
         pos_type rfind(const char* s, pos_type pos = npos)               const noexcept;
         pos_type rfind(char ch, pos_type pos = npos)                    const noexcept;
 
-        Twine& append(const String& _data);
-        Twine& append(const char* _data, size_type count);
-        Twine& append(const char* _data);
-        Twine& append(size_type count, char _data);
+        StringToolkit& append(const String& _data);
+        StringToolkit& append(const char* _data, size_type count);
+        StringToolkit& append(const char* _data);
+        StringToolkit& append(size_type count, char _data);
 
         template<class InputIt>
-        Twine& append(InputIt first, InputIt last);
+        StringToolkit& append(InputIt first, InputIt last);
 
-        Twine& operator+=(const Twine& rhs);
-        Twine& operator+=(const String& rhs);
-        Twine& operator+=(const char* rhs);
-        Twine& operator+=(char ch);
+        StringToolkit& operator+=(const StringToolkit& rhs);
+        StringToolkit& operator+=(const String& rhs);
+        StringToolkit& operator+=(const char* rhs);
+        StringToolkit& operator+=(char ch);
 
-        Twine operator+(const Twine& rhs) const;
-        Twine operator+(const String& rhs) const;
-        Twine operator+(const char* rhs) const;
-        friend Twine operator+(const char* lhs, const Twine& rhs);
-        friend Twine operator+(const String& lhs, const Twine& rhs);
+        StringToolkit operator+(const StringToolkit& rhs) const;
+        StringToolkit operator+(const String& rhs) const;
+        StringToolkit operator+(const char* rhs) const;
+        friend StringToolkit operator+(const char* lhs, const StringToolkit& rhs);
+        friend StringToolkit operator+(const String& lhs, const StringToolkit& rhs);
 
-        Twine operator*(size_type n) const;
-        Twine& operator*=(size_type n);
-		Twine operator-(size_type n) const;
-		Twine& operator-=(size_type n);
-        Twine& operator--();
+        StringToolkit operator*(size_type n) const;
+        StringToolkit& operator*=(size_type n);
+		StringToolkit operator-(size_type n) const;
+		StringToolkit& operator-=(size_type n);
+        StringToolkit& operator--();
 
-        Twine& operator&=(const Twine& rhs);
-        Twine& operator|=(const Twine& rhs);
-        Twine& operator^=(const Twine& rhs);
+        StringToolkit& operator&=(const StringToolkit& rhs);
+        StringToolkit& operator|=(const StringToolkit& rhs);
+        StringToolkit& operator^=(const StringToolkit& rhs);
 
-        Twine operator&(const Twine& rhs)     const;
-        Twine operator&(const String& rhs)    const;
-        Twine operator&(const char* rhs)           const;
+        StringToolkit operator&(const StringToolkit& rhs)     const;
+        StringToolkit operator&(const String& rhs)    const;
+        StringToolkit operator&(const char* rhs)           const;
 
-        Twine operator|(const Twine& rhs)     const;
-        Twine operator|(const String& rhs)    const;
-        Twine operator|(const char* rhs)           const;
+        StringToolkit operator|(const StringToolkit& rhs)     const;
+        StringToolkit operator|(const String& rhs)    const;
+        StringToolkit operator|(const char* rhs)           const;
 
-        Twine operator^(const Twine& rhs)     const;
-        Twine operator^(const String& rhs)    const;
-        Twine operator^(const char* rhs)           const;
+        StringToolkit operator^(const StringToolkit& rhs)     const;
+        StringToolkit operator^(const String& rhs)    const;
+        StringToolkit operator^(const char* rhs)           const;
 
-        Twine operator~()                          const = delete; 
-        Twine operator<<(size_type)                const = delete;
-        Twine operator>>(size_type)                const = delete;
-        Twine& operator<<=(size_type)              = delete;
-        Twine& operator>>=(size_type)              = delete;
+        StringToolkit operator~()                          const = delete; 
+        StringToolkit operator<<(size_type)                const = delete;
+        StringToolkit operator>>(size_type)                const = delete;
+        StringToolkit& operator<<=(size_type)              = delete;
+        StringToolkit& operator>>=(size_type)              = delete;
 
-        Twine& operator-=(char ch)                 = delete;
-        Twine& operator-=(const Twine& rhs)   = delete;
-        Twine& operator-=(const char* cc)          = delete;
-        Twine& operator-=(const String& rhs)  = delete;
+        StringToolkit& operator-=(char ch)                 = delete;
+        StringToolkit& operator-=(const StringToolkit& rhs)   = delete;
+        StringToolkit& operator-=(const char* cc)          = delete;
+        StringToolkit& operator-=(const String& rhs)  = delete;
 
-        Twine operator-(char ch)                   const = delete;
-        Twine operator-(const Twine& rhs)     const = delete;
-        Twine operator-(const char* cc)            const = delete;
-        Twine operator-(const String& rhs)    const = delete;
+        StringToolkit operator-(char ch)                   const = delete;
+        StringToolkit operator-(const StringToolkit& rhs)     const = delete;
+        StringToolkit operator-(const char* cc)            const = delete;
+        StringToolkit operator-(const String& rhs)    const = delete;
 
-        Twine& operator*=(char ch)                 = delete;
-        Twine& operator*=(const Twine& rhs)   = delete;
-        Twine& operator*=(const char* cc)          = delete;
-        Twine& operator*=(const String& rhs)  = delete;
+        StringToolkit& operator*=(char ch)                 = delete;
+        StringToolkit& operator*=(const StringToolkit& rhs)   = delete;
+        StringToolkit& operator*=(const char* cc)          = delete;
+        StringToolkit& operator*=(const String& rhs)  = delete;
 
-        Twine operator*(char ch)                   const = delete;
-        Twine operator*(const Twine& rhs)     const = delete;
-        Twine operator*(const char* cc)            const = delete;
-        Twine operator*(const String& rhs)    const = delete;
+        StringToolkit operator*(char ch)                   const = delete;
+        StringToolkit operator*(const StringToolkit& rhs)     const = delete;
+        StringToolkit operator*(const char* cc)            const = delete;
+        StringToolkit operator*(const String& rhs)    const = delete;
 
-        Twine& operator/=(char ch)                 = delete;
-        Twine& operator/=(const Twine& rhs)   = delete;
-        Twine& operator/=(const char* cc)          = delete;
-        Twine& operator/=(const String& rhs)  = delete;
+        StringToolkit& operator/=(char ch)                 = delete;
+        StringToolkit& operator/=(const StringToolkit& rhs)   = delete;
+        StringToolkit& operator/=(const char* cc)          = delete;
+        StringToolkit& operator/=(const String& rhs)  = delete;
 
-        Twine operator/(char ch)                   const = delete;
-        Twine operator/(const Twine& rhs)     const = delete;
-        Twine operator/(const char* cc)            const = delete;
-        Twine operator/(const String& rhs)    const = delete;
+        StringToolkit operator/(char ch)                   const = delete;
+        StringToolkit operator/(const StringToolkit& rhs)     const = delete;
+        StringToolkit operator/(const char* cc)            const = delete;
+        StringToolkit operator/(const String& rhs)    const = delete;
 
         char& operator[](size_type pos);
         const char& operator[](size_type pos)           const;
@@ -320,47 +320,47 @@ namespace sp
         const_reverse_iterator rend()                   const noexcept;
         const_reverse_iterator crend()                  const noexcept;
 
-        auto operator<=>(Twine rhs) const { return m_data <=> rhs.m_data; }
-        bool operator==(Twine rhs) const { return m_data == rhs.m_data; }
+        auto operator<=>(StringToolkit rhs) const { return m_data <=> rhs.m_data; }
+        bool operator==(StringToolkit rhs) const { return m_data == rhs.m_data; }
 
-        Twine substr(pos_type pos = 0, pos_type count = npos) const;
+        StringToolkit substr(pos_type pos = 0, pos_type count = npos) const;
         // Substring limited to [start_pos, end_pos); count == npos means "up to end_pos".
         // Named differently so a two-argument call is never ambiguous with substr(pos, count).
-        Twine substr_between(pos_type start_pos, pos_type end_pos, pos_type count = npos) const;
+        StringToolkit substr_between(pos_type start_pos, pos_type end_pos, pos_type count = npos) const;
 
-        pos_type find(const Twine& s, pos_type pos = 0) const noexcept;
+        pos_type find(const StringToolkit& s, pos_type pos = 0) const noexcept;
         pos_type find(const char* s, pos_type pos = 0)       const noexcept;
         pos_type find(char ch, pos_type pos = 0)             const noexcept;
 
-		Twine& replace(pos_type pos, pos_type count, const Twine& str);
-		Twine& replace(pos_type pos, pos_type count, const char* s);
-		Twine& replace(pos_type pos, pos_type count, const String& str);
+		StringToolkit& replace(pos_type pos, pos_type count, const StringToolkit& str);
+		StringToolkit& replace(pos_type pos, pos_type count, const char* s);
+		StringToolkit& replace(pos_type pos, pos_type count, const String& str);
 
-        Twine& toUpper();
-		Twine& toLower();
-        Twine copyUpper() const;
-		Twine copyLower() const;
+        StringToolkit& toUpper();
+		StringToolkit& toLower();
+        StringToolkit copyUpper() const;
+		StringToolkit copyLower() const;
 
-		Twine& trimLeft();
-		Twine& trimRight();
-		Twine& trim();
-		Twine& trim(char ch);
-        Twine copyTrim() const;
-        Twine copyTrim(char ch) const;
+		StringToolkit& trimLeft();
+		StringToolkit& trimRight();
+		StringToolkit& trim();
+		StringToolkit& trim(char ch);
+        StringToolkit copyTrim() const;
+        StringToolkit copyTrim(char ch) const;
 
-        Twine& replaceAll(const Twine& from, const Twine& to);
-		Twine copyReplaceAll(const Twine& from, const Twine& to);
+        StringToolkit& replaceAll(const StringToolkit& from, const StringToolkit& to);
+		StringToolkit copyReplaceAll(const StringToolkit& from, const StringToolkit& to);
 
-		bool startsWith(const Twine& prefix) const;
+		bool startsWith(const StringToolkit& prefix) const;
 		bool startsWith(const char* prefix) const;
 		bool startsWith(const String& prefix) const;
         bool startsWith(char ch) const;
-        bool endsWith(const Twine& suffix) const;
+        bool endsWith(const StringToolkit& suffix) const;
 		bool endsWith(const char* suffix) const;
 		bool endsWith(const String& suffix) const;
 		bool endsWith(char ch) const;
 
-		bool contains(const Twine& subString) const;
+		bool contains(const StringToolkit& subString) const;
 		bool contains(const char* subString) const;
 		bool contains(const String& subString) const;
 		bool contains(char ch) const;
@@ -370,9 +370,9 @@ namespace sp
 		bool contains(const std::initializer_list<String>& subStrings) const;
 		bool contains(const std::vector<String>& subStrings) const;
 		bool contains(const std::set<String>& subStrings) const;
-		bool contains(const std::initializer_list<Twine>& subStrings) const;
-		bool contains(const std::vector<Twine>& subStrings) const;
-		bool contains(const std::set<Twine>& subStrings) const;
+		bool contains(const std::initializer_list<StringToolkit>& subStrings) const;
+		bool contains(const std::vector<StringToolkit>& subStrings) const;
+		bool contains(const std::set<StringToolkit>& subStrings) const;
 		bool contains(const std::initializer_list<const char*>& subStrings) const;
 		bool contains(const std::vector<const char*>& subStrings) const;
 		bool contains(const std::set<const char*>& subStrings) const;
@@ -381,60 +381,60 @@ namespace sp
 		bool contains(const std::set<String_view>& subStrings) const;
 
 		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-        Twine& fromNumber(T num);
+        StringToolkit& fromNumber(T num);
         
 		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 		T toNumber() const;
 
         template <typename... Args>
-		Twine& format(Args&&... args);
+		StringToolkit& format(Args&&... args);
 
 		template <typename... Args>
-		Twine concat(Args&&... args);
+		StringToolkit concat(Args&&... args);
 
         void push_back(char c);
         void pop_back();
 
-        bool matches(const Twine& pattern) const;
+        bool matches(const StringToolkit& pattern) const;
 		bool matches(const char* pattern) const;
 		bool matches(const String& pattern) const;
 
-		void regexReplace(const Twine& pattern, const Twine& replacement);
+		void regexReplace(const StringToolkit& pattern, const StringToolkit& replacement);
 		void regexReplace(const char* pattern, const char* replacement);
 		void regexReplace(const String& pattern, const String& replacement);
 
-		Twine& fromWide(const wString& wideStr);
+		StringToolkit& fromWide(const wString& wideStr);
 		wString toWide() const;
 
-		std::vector<Twine> split(const Twine& delimiter) const;
-		std::vector<Twine> split(const char* delimiter) const;
-		std::vector<Twine> split(const String& delimiter) const;
-		std::vector<Twine> split(char delimiter) const;
+		std::vector<StringToolkit> split(const StringToolkit& delimiter) const;
+		std::vector<StringToolkit> split(const char* delimiter) const;
+		std::vector<StringToolkit> split(const String& delimiter) const;
+		std::vector<StringToolkit> split(char delimiter) const;
 
-		size_type findFirstOf(const Twine& chars, pos_type pos = 0) const;
+		size_type findFirstOf(const StringToolkit& chars, pos_type pos = 0) const;
 		size_type findFirstOf(const char* chars, pos_type pos = 0) const;
 		size_type findFirstOf(const String& chars, pos_type pos = 0) const;
 		size_type findFirstOf(char ch, pos_type pos = 0) const;
-		size_type findLastOf(const Twine& chars, pos_type pos = npos) const;
+		size_type findLastOf(const StringToolkit& chars, pos_type pos = npos) const;
 		size_type findLastOf(const char* chars, pos_type pos = npos) const;
 		size_type findLastOf(const String& chars, pos_type pos = npos) const;
 		size_type findLastOf(char ch, pos_type pos = npos) const;
 
-		size_type find_first_not_of(const Twine& chars, pos_type pos = 0) const noexcept;
+		size_type find_first_not_of(const StringToolkit& chars, pos_type pos = 0) const noexcept;
 		size_type find_first_not_of(const char* chars, pos_type pos = 0) const noexcept;
 		size_type find_first_not_of(char ch, pos_type pos = 0) const noexcept;
-		size_type find_last_not_of(const Twine& chars, pos_type pos = npos) const noexcept;
+		size_type find_last_not_of(const StringToolkit& chars, pos_type pos = npos) const noexcept;
 		size_type find_last_not_of(const char* chars, pos_type pos = npos) const noexcept;
 		size_type find_last_not_of(char ch, pos_type pos = npos) const noexcept;
 
 		size_type UTF8Length() const;
 		size_type UTF8CharCount() const;
 
-		Twine UTF8SubString(size_type start, size_type length) const;
-		Twine UTF8SubString(size_type start) const;
-		Twine UTF8SubString(size_type start, size_type end, size_type length) const;
+		StringToolkit UTF8SubString(size_type start, size_type length) const;
+		StringToolkit UTF8SubString(size_type start) const;
+		StringToolkit UTF8SubString(size_type start, size_type end, size_type length) const;
 
-		void swap(Twine& other) noexcept;
+		void swap(StringToolkit& other) noexcept;
 
         bool is_clear() const noexcept;
 		bool is_empty() const noexcept;
@@ -474,17 +474,17 @@ namespace sp
 		void reset(const String& _data);
 		void reset(String&& _data) noexcept;
 		void reset(const char* _data) noexcept;
-		void reset(const Twine& _data);
-		void reset(Twine&& _data) noexcept;
+		void reset(const StringToolkit& _data);
+		void reset(StringToolkit&& _data) noexcept;
         void reset();
 
 		void reverse();
 
 		size_type count(char ch) const;
-		size_type count(const Twine& str) const;
+		size_type count(const StringToolkit& str) const;
 		size_type count(String_view str) const;
 
-        void join(Twine data);
+        void join(StringToolkit data);
 		void join(const String& data);
 		void join(const char* data);
 		void join(char data);
@@ -494,65 +494,65 @@ namespace sp
         template<typename T>
 		void remove_suffix(const T& suffix);
 
-        static Twine create();
+        static StringToolkit create();
 
         template<typename Func>
         auto and_then(Func&& func)
         {
             return std::invoke(
                 std::forward<Func>(func),
-                std::forward<sp::Twine>(*this)
+                std::forward<sp::StringToolkit>(*this)
             );
         }
 
-        ~Twine()                                   = default;
+        ~StringToolkit()                                   = default;
     };
 
     // ---- Template member definitions (must live in the header for implicit instantiation) ----
 
     template<typename T, typename>
-    Twine::Twine(T num) : m_data(std::to_string(num)) {}
+    StringToolkit::StringToolkit(T num) : m_data(std::to_string(num)) {}
 
     template<typename T, typename>
-    Twine::Twine(T num, int precision)
+    StringToolkit::StringToolkit(T num, int precision)
     {
         m_data = std::format("{:.{}f}", num, precision);
     }
 
     template<typename T, typename>
-    Twine::Twine(std::vector<T> nums)
+    StringToolkit::StringToolkit(std::vector<T> nums)
     {
         for (auto& num : nums) { m_data += static_cast<char>(num); }
     }
 
     template<typename T, typename>
-    Twine::Twine(std::initializer_list<T> nums)
+    StringToolkit::StringToolkit(std::initializer_list<T> nums)
     {
         for (auto& num : nums) { m_data += static_cast<char>(num); }
     }
 
     template<typename T, typename>
-    Twine::Twine(std::set<T> nums)
+    StringToolkit::StringToolkit(std::set<T> nums)
     {
         for (auto& num : nums) { m_data += static_cast<char>(num); }
     }
 
     template<class InputIt>
-    Twine& Twine::append(InputIt first, InputIt last)
+    StringToolkit& StringToolkit::append(InputIt first, InputIt last)
     {
         m_data.append(first, last);
         return *this;
     }
 
     template<typename T, typename>
-    Twine& Twine::fromNumber(T num)
+    StringToolkit& StringToolkit::fromNumber(T num)
     {
         m_data = std::to_string(num);
         return *this;
     }
 
     template<typename T, typename>
-    T Twine::toNumber() const
+    T StringToolkit::toNumber() const
     {
         if (m_data.empty()) {
             throw sp::Invalid_Conversion("Cannot convert empty string to number.");
@@ -599,7 +599,7 @@ namespace sp
     }
 
     template<typename... Args>
-    Twine& Twine::format(Args&&... args)
+    StringToolkit& StringToolkit::format(Args&&... args)
     {
         const int formattedSize = std::snprintf(
             nullptr,
@@ -634,13 +634,13 @@ namespace sp
     }
 
     template<typename... Args>
-    Twine Twine::concat(Args&&... args)
+    StringToolkit StringToolkit::concat(Args&&... args)
     {
-        return (Twine{} + ... + Twine(std::forward<Args>(args)));
+        return (StringToolkit{} + ... + StringToolkit(std::forward<Args>(args)));
     }
 
     template<typename T>
-    void Twine::remove_prefix(const T& prefix)
+    void StringToolkit::remove_prefix(const T& prefix)
     {
         String prefix_str;
         if constexpr (std::is_constructible_v<String_view, const T&>)
@@ -658,7 +658,7 @@ namespace sp
     }
 
     template<typename T>
-    void Twine::remove_suffix(const T& suffix)
+    void StringToolkit::remove_suffix(const T& suffix)
     {
         String suffix_str;
         if constexpr (std::is_constructible_v<String_view, const T&>)
@@ -675,23 +675,23 @@ namespace sp
         m_data.erase(m_data.size() - suffix_str.size(), suffix_str.size());
     }
 
-    std::istream& getline(std::istream& is, Twine& str, char delim = '\n');
+    std::istream& getline(std::istream& is, StringToolkit& str, char delim = '\n');
 
     // Enables std::swappable (ADL): required for std::movable / ranges algorithms.
-    void swap(Twine& lhs, Twine& rhs) noexcept;
+    void swap(StringToolkit& lhs, StringToolkit& rhs) noexcept;
 
-	Twine operator""_sp(const char* data, size_t size);
+	StringToolkit operator""_sp(const char* data, size_t size);
 }
 
 using std::istream, std::ostream;
 
-istream& operator>>(istream& is, sp::Twine& str);
-ostream& operator<<(ostream& os, const sp::Twine& str);
+istream& operator>>(istream& is, sp::StringToolkit& str);
+ostream& operator<<(ostream& os, const sp::StringToolkit& str);
 
 namespace std
 {
     template<>
-    struct std::formatter<sp::Twine, char>
+    struct std::formatter<sp::StringToolkit, char>
         : std::formatter<String_view, char>
     {
         constexpr auto parse(std::format_parse_context& ctx)
@@ -699,7 +699,7 @@ namespace std
             return std::formatter<String_view, char>::parse(ctx);
         }
 
-        auto format(const sp::Twine& value,
+        auto format(const sp::StringToolkit& value,
             std::format_context& ctx) const
         {
             return std::formatter<String_view, char>::format(
@@ -712,8 +712,8 @@ namespace std
 
 namespace std {
     template<>
-    struct hash<sp::Twine> {
-        size_t operator()(const sp::Twine& s) const noexcept {
+    struct hash<sp::StringToolkit> {
+        size_t operator()(const sp::StringToolkit& s) const noexcept {
             return std::hash<std::string_view>{}(std::string_view(s.c_str(), s.size()));
         }
     };

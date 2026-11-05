@@ -162,13 +162,13 @@ namespace
 	}
 }
 
-bool sp::semver::is_valid(const Twine& s) noexcept
+bool sp::semver::is_valid(const StringToolkit& s) noexcept
 {
 	Version version{};
 	return parse(s.s_str(), version);
 }
 
-int sp::semver::compare(const Twine& a, const Twine& b)
+int sp::semver::compare(const StringToolkit& a, const StringToolkit& b)
 {
 	Version lhs{}, rhs{};
 

@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Twine.h">
+    <ClInclude Include="StringToolkit.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="method.h">
@@ -41,10 +41,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Twine.cpp">
+    <ClCompile Include="StringToolkit.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
-    <ClCompile Include="testTwine.cpp">
+    <ClCompile Include="testStringToolkit.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="method.cpp">

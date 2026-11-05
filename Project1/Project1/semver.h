@@ -21,7 +21,7 @@
 #ifndef __INC_SEMVER_H__
 #define __INC_SEMVER_H__
 
-#include "Twine.h"
+#include "StringToolkit.h"
 
 namespace sp
 {
@@ -29,11 +29,11 @@ namespace sp
 	namespace semver
 	{
 		// Strict validation per semver.org, including the "no leading zeros" rules.
-		bool is_valid(const Twine& s) noexcept;
+		bool is_valid(const StringToolkit& s) noexcept;
 
 		// Precedence per semver.org; build metadata is ignored.
 		// Returns < 0, 0 or > 0. Throws Invalid_Format when either side is not valid semver.
-		int compare(const Twine& a, const Twine& b);
+		int compare(const StringToolkit& a, const StringToolkit& b);
 	}
 }
 

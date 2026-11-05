@@ -51,12 +51,12 @@ namespace
 	}
 }
 
-bool sp::validate::is_ipv4(const Twine& s) noexcept
+bool sp::validate::is_ipv4(const StringToolkit& s) noexcept
 {
 	return parse_ipv4(s.s_str());
 }
 
-bool sp::validate::is_ipv6(const Twine& s) noexcept
+bool sp::validate::is_ipv6(const StringToolkit& s) noexcept
 {
 	const String& src = s.s_str();
 
@@ -134,7 +134,7 @@ bool sp::validate::is_ipv6(const Twine& s) noexcept
 	return compressed ? groups.size() < 8 : groups.size() == 8;
 }
 
-bool sp::validate::is_email(const Twine& s) noexcept
+bool sp::validate::is_email(const StringToolkit& s) noexcept
 {
 	const String& src = s.s_str();
 	const std::size_t at = src.find('@');
@@ -180,7 +180,7 @@ bool sp::validate::is_email(const Twine& s) noexcept
 	return true;
 }
 
-bool sp::validate::is_uuid(const Twine& s) noexcept
+bool sp::validate::is_uuid(const StringToolkit& s) noexcept
 {
 	const String& src = s.s_str();
 
@@ -205,7 +205,7 @@ bool sp::validate::is_uuid(const Twine& s) noexcept
 	return true;
 }
 
-bool sp::validate::is_url(const Twine& s) noexcept
+bool sp::validate::is_url(const StringToolkit& s) noexcept
 {
 	const String& src = s.s_str();
 	const std::size_t scheme_end = src.find("://");

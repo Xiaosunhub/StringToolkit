@@ -21,43 +21,49 @@
 #ifndef __INC_CODING_H__
 #define __INC_CODING_H__
 
-#include "Twine.h"
+#include "StringToolkit.h"
 
 namespace sp
 {
 	namespace coding
 	{
 		// Base64: standard alphabet with '=' padding.
-		Twine toBase64(const Twine& data);
-		Twine fromBase64(const Twine& text);   // throws Invalid_Conversion
+		StringToolkit toBase64(const StringToolkit& data);
+		StringToolkit fromBase64(const StringToolkit& text);   // throws Invalid_Conversion
+
+		// URL- and filename-safe Base64 (RFC 4648 section 5): alphabet uses
+		// '-' and '_' instead of '+' and '/', and no '=' padding is emitted.
+		// fromBase64Url also accepts missing padding.
+		StringToolkit toBase64Url(const StringToolkit& data);
+		StringToolkit fromBase64Url(const StringToolkit& text); // throws Invalid_Conversion
 
 		// Hex: two characters per byte, optional uppercase output.
-		Twine toHex(const Twine& data, bool uppercase = false);
-		Twine fromHex(const Twine& text);      // throws Invalid_Conversion
+		StringToolkit toHex(const StringToolkit& data, bool uppercase = false);
+		StringToolkit fromHex(const StringToolkit& text);      // throws Invalid_Conversion
 
 		// URL percent-encoding: unreserved characters (A-Z a-z 0-9 - _ . ~) are kept,
 		// everything else becomes %XX (uppercase hex).
-		Twine urlEncode(const Twine& data);
-		Twine urlDecode(const Twine& text);    // accepts %XX and '+', throws Invalid_Conversion
+		StringToolkit urlEncode(const StringToolkit& data);
+		StringToolkit urlDecode(const StringToolkit& text);    // accepts %XX and '+', throws Invalid_Conversion
 
 		// Binary: 8 bits per byte, MSB first. fromBinary throws Invalid_Conversion
 		// when the length is not a multiple of 8 or contains characters other than 0/1.
-		Twine toBinary(const Twine& data);
-		Twine fromBinary(const Twine& text);
-		bool is_binary(const Twine& text) noexcept;
+		StringToolkit toBinary(const StringToolkit& data);
+		StringToolkit fromBinary(const StringToolkit& text);
+		bool is_binary(const StringToolkit& text) noexcept;
 
 		// Octal: 3 octal digits per byte. fromOctal throws Invalid_Conversion
 		// when the length is not a multiple of 3 or contains digits outside 0-7.
-		Twine toOctal(const Twine& data);
-		Twine fromOctal(const Twine& text);
-		bool is_octal(const Twine& text) noexcept;
+		StringToolkit toOctal(const StringToolkit& data);
+		StringToolkit fromOctal(const StringToolkit& text);
+		bool is_octal(const StringToolkit& text) noexcept;
 
 		// General integer radix (base 2-36, digits 0-9 then a-z).
 		// toBase throws Invalid_Argument when base is out of range.
 		// fromBase accepts an optional leading '-' and is case-insensitive;
 		// throws Invalid_Conversion on bad digits or overflow.
-		Twine toBase(unsigned long long value, unsigned base);
-		long long fromBase(const Twine& text, unsigned base);
+		StringToolkit toBase(unsigned long long value, unsigned base);
+		long long fromBase(const StringToolkit& text, unsigned base);
 	}
 }
 

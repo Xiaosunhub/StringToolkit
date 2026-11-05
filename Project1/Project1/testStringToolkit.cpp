@@ -1,4 +1,4 @@
-#include "Twine.h"
+#include "StringToolkit.h"
 #include "method.h"
 #include "utf8.h"
 #include "coding.h"
@@ -28,91 +28,91 @@ static void check(bool ok, const char* name)
 
 int main()
 {
-	using sp::Twine;
-	using size_type = Twine::size_type;
+	using sp::StringToolkit;
+	using size_type = StringToolkit::size_type;
 
 	// construction
-	check(Twine{ "Hello" } == "Hello", "construct from const char*");
-	check(Twine(42) == "42", "construct from int");
-	check(Twine(3.14, 2) == "3.14", "construct with precision");
-	check(Twine{ { 'h', 'i' } } == "hi", "construct from initializer_list");
-	check(Twine{ std::string("abc") } == "abc", "construct from std::string");
+	check(StringToolkit{ "Hello" } == "Hello", "construct from const char*");
+	check(StringToolkit(42) == "42", "construct from int");
+	check(StringToolkit(3.14, 2) == "3.14", "construct with precision");
+	check(StringToolkit{ { 'h', 'i' } } == "hi", "construct from initializer_list");
+	check(StringToolkit{ std::string("abc") } == "abc", "construct from std::string");
 
 	// operator+ / concat
-	check(Twine{ "Hello" } + " World" == "Hello World", "operator+ (Twine + const char*)");
-	check("Say " + Twine{ "Hi" } == "Say Hi", "operator+ (const char* + Twine)");
-	check(Twine{ "x" } + Twine{ "y" } == "xy", "operator+ (Twine + Twine)");
-	check(Twine{ "ab" }.concat("cd", Twine{ "ef" }) == "cdef", "concat");
-	check((Twine{ "ab" } += "cd") == "abcd", "operator+=");
+	check(StringToolkit{ "Hello" } + " World" == "Hello World", "operator+ (StringToolkit + const char*)");
+	check("Say " + StringToolkit{ "Hi" } == "Say Hi", "operator+ (const char* + StringToolkit)");
+	check(StringToolkit{ "x" } + StringToolkit{ "y" } == "xy", "operator+ (StringToolkit + StringToolkit)");
+	check(StringToolkit{ "ab" }.concat("cd", StringToolkit{ "ef" }) == "cdef", "concat");
+	check((StringToolkit{ "ab" } += "cd") == "abcd", "operator+=");
 
 	// modify
-	check(Twine{ "  pad  " }.copyTrim() == "pad", "copyTrim");
-	check(Twine{ "aabbcc" }.copyReplaceAll("bb", "XX") == "aaXXcc", "copyReplaceAll");
-	check(Twine{ "abc" }.copyUpper() == "ABC", "copyUpper");
-	check(Twine{ "ABC" }.copyLower() == "abc", "copyLower");
-	check(Twine{ "aaa--aaa" }.copyTrim('-') == "aaa--aaa", "trim(ch) keeps middle");
-	check(Twine{ "--x--" }.copyTrim('-') == "x", "trim(ch) both sides");
+	check(StringToolkit{ "  pad  " }.copyTrim() == "pad", "copyTrim");
+	check(StringToolkit{ "aabbcc" }.copyReplaceAll("bb", "XX") == "aaXXcc", "copyReplaceAll");
+	check(StringToolkit{ "abc" }.copyUpper() == "ABC", "copyUpper");
+	check(StringToolkit{ "ABC" }.copyLower() == "abc", "copyLower");
+	check(StringToolkit{ "aaa--aaa" }.copyTrim('-') == "aaa--aaa", "trim(ch) keeps middle");
+	check(StringToolkit{ "--x--" }.copyTrim('-') == "x", "trim(ch) both sides");
 
-	Twine repeat{ "ab" };
+	StringToolkit repeat{ "ab" };
 	repeat *= size_type{ 3 };
 	check(repeat == "ababab", "operator*=");
-	check(Twine{ "ab" } * size_type{ 2 } == "abab", "operator*");
+	check(StringToolkit{ "ab" } * size_type{ 2 } == "abab", "operator*");
 
 	// query
-	check(Twine{ "hello" }.startsWith("he"), "startsWith");
-	check(Twine{ "hello" }.endsWith("lo"), "endsWith");
-	check(Twine{ "hello" }.contains('e'), "contains(char)");
-	check(Twine{ "hello" }.contains("ell"), "contains(substring)");
-	check(Twine{ "hello" }.findFirstOf('l') == 2, "findFirstOf");
-	check(Twine{ "hello" }.findLastOf('l') == 3, "findLastOf");
-	check(Twine{ "a,b,,c" }.split(',') ==
-		(std::vector<Twine>{ "a", "b", "c" }), "split(char)");
+	check(StringToolkit{ "hello" }.startsWith("he"), "startsWith");
+	check(StringToolkit{ "hello" }.endsWith("lo"), "endsWith");
+	check(StringToolkit{ "hello" }.contains('e'), "contains(char)");
+	check(StringToolkit{ "hello" }.contains("ell"), "contains(substring)");
+	check(StringToolkit{ "hello" }.findFirstOf('l') == 2, "findFirstOf");
+	check(StringToolkit{ "hello" }.findLastOf('l') == 3, "findLastOf");
+	check(StringToolkit{ "a,b,,c" }.split(',') ==
+		(std::vector<StringToolkit>{ "a", "b", "c" }), "split(char)");
 
 	// number conversion
-	check(Twine{ "12345" }.toNumber<int>() == 12345, "toNumber<int>");
-	check(Twine{ "3.5" }.toNumber<double>() == 3.5, "toNumber<double>");
-	check(Twine{ 1 }.fromNumber(456) == "456", "fromNumber");
+	check(StringToolkit{ "12345" }.toNumber<int>() == 12345, "toNumber<int>");
+	check(StringToolkit{ "3.5" }.toNumber<double>() == 3.5, "toNumber<double>");
+	check(StringToolkit{ 1 }.fromNumber(456) == "456", "fromNumber");
 
 	// exceptions
-	try { Twine{ "12a" }.toNumber<int>(); check(false, "toNumber throws on bad input"); }
+	try { StringToolkit{ "12a" }.toNumber<int>(); check(false, "toNumber throws on bad input"); }
 	catch (const sp::Invalid_Conversion&) { check(true, "toNumber throws on bad input"); }
 
-	try { Twine{ "abc" }[10]; check(false, "operator[] throws on bad index"); }
+	try { StringToolkit{ "abc" }[10]; check(false, "operator[] throws on bad index"); }
 	catch (const sp::Index_Out_Of_Range&) { check(true, "operator[] throws on bad index"); }
 
 	// utf8
-	check(Twine{ "abc" }.is_utf8(), "is_utf8 (ascii)");
-	check(Twine{ "\xC3\xA9" }.is_utf8(), "is_utf8 (2-byte sequence)");
-	check(Twine{ "\xC3" }.is_not_utf8(), "is_utf8 rejects truncated sequence");
-	check(Twine{ "\xE0\x80\x80" }.is_not_utf8(), "is_utf8 rejects overlong sequence");
+	check(StringToolkit{ "abc" }.is_utf8(), "is_utf8 (ascii)");
+	check(StringToolkit{ "\xC3\xA9" }.is_utf8(), "is_utf8 (2-byte sequence)");
+	check(StringToolkit{ "\xC3" }.is_not_utf8(), "is_utf8 rejects truncated sequence");
+	check(StringToolkit{ "\xE0\x80\x80" }.is_not_utf8(), "is_utf8 rejects overlong sequence");
 
 	// method.h helpers
-	Twine m{ "abc" };
+	StringToolkit m{ "abc" };
 	sp::reverse_string(m);
 	check(m == "cba", "reverse_string");
 
-	Twine p{ "prefix-body" };
-	sp::remove_prefix(p, Twine{ "prefix-" });
+	StringToolkit p{ "prefix-body" };
+	sp::remove_prefix(p, StringToolkit{ "prefix-" });
 	check(p == "body", "remove_prefix");
 
 	// and_then / create
-	check(sp::Twine::create()
-		.and_then([](sp::Twine val) -> sp::Twine { return val + "ok"; })
+	check(sp::StringToolkit::create()
+		.and_then([](sp::StringToolkit val) -> sp::StringToolkit { return val + "ok"; })
 		== "ok", "create + and_then");
 
 	// container interface
 	{
-		Twine s{ "ace" };
+		StringToolkit s{ "ace" };
 		s.insert(1, "b");
 		check(s == "abce", "insert(pos, const char*)");
 		s.insert(0, 'X');
 		check(s == "Xabce", "insert(pos, char)");
 		s.erase(0, 1);
 		check(s == "abce", "erase(pos, count)");
-		check(Twine{ "abc" }.compare("abd") < 0, "compare");
-		check(Twine{ "abcabc" }.rfind('b') == 4, "rfind(char)");
+		check(StringToolkit{ "abc" }.compare("abd") < 0, "compare");
+		check(StringToolkit{ "abcabc" }.rfind('b') == 4, "rfind(char)");
 
-		Twine t;
+		StringToolkit t;
 		t.assign(3, 'z');
 		check(t == "zzz", "assign(count, char)");
 		t.resize(5, '!');
@@ -121,37 +121,37 @@ int main()
 
 	// text utilities (method.h)
 	{
-		check(sp::join({ Twine{ "a" }, Twine{ "b" }, Twine{ "c" } }, "-") == "a-b-c",
+		check(sp::join({ StringToolkit{ "a" }, StringToolkit{ "b" }, StringToolkit{ "c" } }, "-") == "a-b-c",
 			"join(parts, separator)");
-		check(sp::join({ Twine{ "a" }, Twine{ "b" } }, ',') == "a,b", "join(parts, char)");
+		check(sp::join({ StringToolkit{ "a" }, StringToolkit{ "b" } }, ',') == "a,b", "join(parts, char)");
 
-		auto lines = sp::split_lines(Twine{ "a\r\nb\nc" });
+		auto lines = sp::split_lines(StringToolkit{ "a\r\nb\nc" });
 		check(lines.size() == 3 && lines[0] == "a" && lines[1] == "b" && lines[2] == "c",
 			"split_lines");
 
-		Twine pad{ "\xE4\xB8\xAD" }; // U+4E2D, one character, three bytes
+		StringToolkit pad{ "\xE4\xB8\xAD" }; // U+4E2D, one character, three bytes
 		sp::pad_left(pad, 3, '*');
 		check(pad == "**\xE4\xB8\xAD", "pad_left (utf8 aware)");
 
 		sp::pad_right(pad, 4, '.');
 		check(pad == "**\xE4\xB8\xAD.", "pad_right");
 
-		Twine cap{ "hELLO" };
+		StringToolkit cap{ "hELLO" };
 		sp::capitalize(cap);
 		check(cap == "Hello", "capitalize");
 
-		Twine sw{ "AbC" };
+		StringToolkit sw{ "AbC" };
 		sp::swap_case(sw);
 		check(sw == "aBc", "swap_case");
 
-		Twine rf{ "abcabc" };
+		StringToolkit rf{ "abcabc" };
 		sp::replace_first(rf, "bc", "X");
 		check(rf == "aXabc", "replace_first");
 	}
 
 	// utf8 module
 	{
-		Twine mixed{ "a\xE4\xB8\xAD" "b" }; // a, U+4E2D, b
+		StringToolkit mixed{ "a\xE4\xB8\xAD" "b" }; // a, U+4E2D, b
 
 		check(sp::utf8::is_valid(mixed), "utf8::is_valid");
 		check(sp::utf8::length(mixed) == 3, "utf8::length");
@@ -163,9 +163,9 @@ int main()
 		check(cps.size() == 3 && cps[1] == 0x4E2D, "utf8::codepoints");
 		check(sp::utf8::from_codepoint(0x4E2D) == "\xE4\xB8\xAD", "utf8::from_codepoint");
 
-		Twine rev{ "ab\xE4\xB8\xAD" };
+		StringToolkit rev{ "ab\xE4\xB8\xAD" };
 		rev.reverse();
-		check(rev == "\xE4\xB8\xAD" "ba", "Twine::reverse (utf8 aware)");
+		check(rev == "\xE4\xB8\xAD" "ba", "StringToolkit::reverse (utf8 aware)");
 	}
 
 	// coding module
@@ -210,14 +210,14 @@ int main()
 	{
 		const String path = "sp_test_tmp.txt";
 
-		sp::write_file(path, Twine{ "line1\nline2\n" });
+		sp::write_file(path, StringToolkit{ "line1\nline2\n" });
 		check(sp::read_file(path) == "line1\nline2\n", "write_file / read_file");
 
 		auto fileLines = sp::read_lines(path);
 		check(fileLines.size() == 2 && fileLines[0] == "line1" && fileLines[1] == "line2",
 			"read_lines");
 
-		sp::write_file(path, Twine{ "x" }, true);
+		sp::write_file(path, StringToolkit{ "x" }, true);
 		check(sp::read_file(path) == "line1\nline2\nx", "write_file (append)");
 
 		std::remove(path.c_str());
@@ -226,31 +226,31 @@ int main()
 	// iterators, streams, sorting, hashing
 	{
 		int charSum = 0;
-		for (const char c : Twine{ "abc" })
+		for (const char c : StringToolkit{ "abc" })
 			charSum += c;
-		check(charSum == 'a' + 'b' + 'c', "range-for over Twine");
+		check(charSum == 'a' + 'b' + 'c', "range-for over StringToolkit");
 
-		std::vector<Twine> words{ Twine{ "pear" }, Twine{ "apple" }, Twine{ "fig" } };
+		std::vector<StringToolkit> words{ StringToolkit{ "pear" }, StringToolkit{ "apple" }, StringToolkit{ "fig" } };
 		std::ranges::sort(words);
 		check(words[0] == "apple" && words[1] == "fig" && words[2] == "pear", "operator<=> sorting");
 
-		std::unordered_map<Twine, int> counts;
-		++counts[Twine{ "key" }];
-		++counts[Twine{ "key" }];
-		check(counts[Twine{ "key" }] == 2, "std::hash usable as map key");
+		std::unordered_map<StringToolkit, int> counts;
+		++counts[StringToolkit{ "key" }];
+		++counts[StringToolkit{ "key" }];
+		check(counts[StringToolkit{ "key" }] == 2, "std::hash usable as map key");
 	}
 
 	// random / case-insensitive / split_by_any / wildcard / case styles
 	{
-		const Twine rnd = sp::generate_random(16);
+		const StringToolkit rnd = sp::generate_random(16);
 		check(rnd.size() == 16, "generate_random length");
 		check(rnd.find_first_not_of(
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") == Twine::npos,
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") == StringToolkit::npos,
 			"generate_random charset");
 
-		const Twine custom = sp::generate_random(8, "ab");
+		const StringToolkit custom = sp::generate_random(8, "ab");
 		check(custom.size() == 8
-			&& custom.find_first_not_of("ab") == Twine::npos, "generate_random custom charset");
+			&& custom.find_first_not_of("ab") == StringToolkit::npos, "generate_random custom charset");
 
 		try { sp::generate_random(4, ""); check(false, "generate_random throws on empty charset"); }
 		catch (const sp::Invalid_Argument&) { check(true, "generate_random throws on empty charset"); }
@@ -259,10 +259,10 @@ int main()
 		check(sp::istarts_with("Hello World", "hello"), "istarts_with");
 		check(sp::iends_with("Hello World", "wOrLd"), "iends_with");
 
-		auto fields = sp::split_by_any(Twine{ "a,b;c d" }, ",; ");
+		auto fields = sp::split_by_any(StringToolkit{ "a,b;c d" }, ",; ");
 		check(fields.size() == 4 && fields[2] == "c", "split_by_any");
 
-		auto trailing = sp::split_by_any(Twine{ "a,b," }, ",");
+		auto trailing = sp::split_by_any(StringToolkit{ "a,b," }, ",");
 		check(trailing.size() == 2, "split_by_any (no trailing empty)");
 
 		check(sp::wildcard_match("hello.txt", "*.txt"), "wildcard_match *");
@@ -271,15 +271,15 @@ int main()
 		check(!sp::wildcard_match("hello.txt", "*.cpp"), "wildcard_match negative");
 		check(sp::wildcard_match("", "*"), "wildcard_match empty string");
 
-		Twine sn{ "HelloWorld_test" };
+		StringToolkit sn{ "HelloWorld_test" };
 		sp::to_snake_case(sn);
 		check(sn == "hello_world_test", "to_snake_case");
 
-		Twine kb{ "HelloWorld-test" };
+		StringToolkit kb{ "HelloWorld-test" };
 		sp::to_kebab_case(kb);
 		check(kb == "hello-world-test", "to_kebab_case");
 
-		Twine cm{ "hello_world-test" };
+		StringToolkit cm{ "hello_world-test" };
 		sp::to_camel_case(cm);
 		check(cm == "helloWorldTest", "to_camel_case");
 	}
@@ -300,11 +300,11 @@ int main()
 		check(sp::csv::escape("a,b") == "\"a,b\"", "csv::escape (comma)");
 		check(sp::csv::escape("say \"hi\"") == "\"say \"\"hi\"\"\"", "csv::escape (quote doubling)");
 
-		auto row = sp::csv::split(Twine{ "a,\"b,c\",\"say \"\"hi\"\"\"" });
+		auto row = sp::csv::split(StringToolkit{ "a,\"b,c\",\"say \"\"hi\"\"\"" });
 		check(row.size() == 3 && row[0] == "a" && row[1] == "b,c" && row[2] == "say \"hi\"",
 			"csv::split");
 
-		try { sp::csv::split(Twine{ "a,\"unterminated" }); check(false, "csv::split throws on unterminated quote"); }
+		try { sp::csv::split(StringToolkit{ "a,\"unterminated" }); check(false, "csv::split throws on unterminated quote"); }
 		catch (const sp::Invalid_Conversion&) { check(true, "csv::split throws on unterminated quote"); }
 	}
 
@@ -374,15 +374,15 @@ int main()
 
 	// layout
 	{
-		auto wrapped = sp::wrap(Twine{ "the quick brown fox" }, 10);
+		auto wrapped = sp::wrap(StringToolkit{ "the quick brown fox" }, 10);
 		check(wrapped.size() == 2 && wrapped[0] == "the quick" && wrapped[1] == "brown fox",
 			"wrap");
 
-		auto wide = sp::wrap(Twine{ "\xE4\xB8\xAD\xE6\x96\x87 abc" }, 4);
+		auto wide = sp::wrap(StringToolkit{ "\xE4\xB8\xAD\xE6\x96\x87 abc" }, 4);
 		check(wide.size() == 2 && wide[0] == "\xE4\xB8\xAD\xE6\x96\x87" && wide[1] == "abc",
 			"wrap (utf8 aware)");
 
-		Twine ind{ "a\n\nb" };
+		StringToolkit ind{ "a\n\nb" };
 		sp::indent(ind, "  ");
 		check(ind == "  a\n\n  b", "indent");
 
@@ -395,20 +395,20 @@ int main()
 		check(sp::human_size(1536) == "1.5 KB", "human_size (KB)");
 		check(sp::human_size(1048576) == "1 MB", "human_size (MB)");
 
-		const std::map<Twine, Twine> vars{
+		const std::map<StringToolkit, StringToolkit> vars{
 			{ "name", "Bob" },
 			{ "lang", "C++" }
 		};
 		check(sp::render("Hi {{name}}, {{unknown}} here", vars) == "Hi Bob, {{unknown}} here",
 			"render (template)");
 
-		auto kv = sp::split_pair(Twine{ "key=value=1" }, "=");
+		auto kv = sp::split_pair(StringToolkit{ "key=value=1" }, "=");
 		check(kv.first == "key" && kv.second == "value=1", "split_pair (first)");
 
-		auto kvLast = sp::split_pair(Twine{ "key=value=1" }, "=", false);
+		auto kvLast = sp::split_pair(StringToolkit{ "key=value=1" }, "=", false);
 		check(kvLast.first == "key=value" && kvLast.second == "1", "split_pair (last)");
 
-		auto kvNone = sp::split_pair(Twine{ "nodelim" }, "=");
+		auto kvNone = sp::split_pair(StringToolkit{ "nodelim" }, "=");
 		check(kvNone.first == "nodelim" && kvNone.second.empty(), "split_pair (no delimiter)");
 	}
 
@@ -477,32 +477,32 @@ int main()
 
 	// convenience (method.h)
 	{
-		Twine longText{ "the quick brown fox jumps" };
+		StringToolkit longText{ "the quick brown fox jumps" };
 		sp::truncate(longText, 12);
 		check(longText == "the quick...", "truncate");
 
-		Twine shortText{ "hi" };
+		StringToolkit shortText{ "hi" };
 		sp::truncate(shortText, 10);
 		check(shortText == "hi", "truncate (short enough)");
 
-		Twine cjk{ "\xE4\xB8\xAD\xE6\x96\x87\xE6\xB5\x8B\xE8\xAF\x95" }; // 4 chars
+		StringToolkit cjk{ "\xE4\xB8\xAD\xE6\x96\x87\xE6\xB5\x8B\xE8\xAF\x95" }; // 4 chars
 		sp::truncate(cjk, 3);
 		// With max_chars <= ellipsis length there is no room for the ellipsis: plain cut.
 		check(cjk == "\xE4\xB8\xAD\xE6\x96\x87\xE6\xB5\x8B", "truncate (utf8 aware, no room for ellipsis)");
 
-		Twine s{ "Hello World!  C++_Dev" };
+		StringToolkit s{ "Hello World!  C++_Dev" };
 		sp::slug(s);
 		check(s == "hello-world-c-dev", "slug");
 
-		auto parts = sp::chunk(Twine{ "abcdefg" }, 3);
+		auto parts = sp::chunk(StringToolkit{ "abcdefg" }, 3);
 		check(parts.size() == 3 && parts[0] == "abc" && parts[1] == "def" && parts[2] == "g",
 			"chunk");
 
-		auto cjkParts = sp::chunk(Twine{ "a\xE4\xB8\xAD" "b" }, 2);
+		auto cjkParts = sp::chunk(StringToolkit{ "a\xE4\xB8\xAD" "b" }, 2);
 		check(cjkParts.size() == 2 && cjkParts[0] == "a\xE4\xB8\xAD" && cjkParts[1] == "b",
 			"chunk (utf8 aware)");
 
-		try { sp::chunk(Twine{ "abc" }, 0); check(false, "chunk throws on zero size"); }
+		try { sp::chunk(StringToolkit{ "abc" }, 0); check(false, "chunk throws on zero size"); }
 		catch (const sp::Invalid_Argument&) { check(true, "chunk throws on zero size"); }
 
 		check(sp::to_bool("true") && sp::to_bool("YES") && sp::to_bool("1"), "to_bool (true)");
@@ -510,6 +510,76 @@ int main()
 
 		try { sp::to_bool("maybe"); check(false, "to_bool throws on bad input"); }
 		catch (const sp::Invalid_Conversion&) { check(true, "to_bool throws on bad input"); }
+	}
+
+	{
+		// URL-safe Base64
+		check(sp::coding::toBase64Url("Man") == "TWFu", "toBase64Url (no padding)");
+		check(sp::coding::toBase64Url("M") == "TQ", "toBase64Url (1 byte, unpadded)");
+		check(sp::coding::fromBase64Url("TWFu") == "Man", "fromBase64Url");
+		check(sp::coding::fromBase64Url("TQ") == "M", "fromBase64Url (unpadded)");
+		check(sp::coding::fromBase64Url("TQ==") == "M", "fromBase64Url (tolerates padding)");
+
+		const StringToolkit binaryish{ String{ ">>??" } };
+		check(sp::coding::toBase64Url(binaryish).s_str().find_first_of("+/=")
+			== String::npos, "toBase64Url (url-safe alphabet)");
+		check(sp::coding::fromBase64Url(sp::coding::toBase64Url(binaryish)) == binaryish,
+			"base64url round-trip");
+
+		try { sp::coding::fromBase64Url("A"); check(false, "fromBase64Url throws on bad length"); }
+		catch (const sp::Invalid_Conversion&) { check(true, "fromBase64Url throws on bad length"); }
+
+		// hamming / common prefix & suffix
+		check(sp::hamming("kitten", "sittin") == 2, "hamming");
+		check(sp::hamming("abc", "abc") == 0, "hamming (identical)");
+
+		try { sp::hamming("ab", "abc"); check(false, "hamming throws on length mismatch"); }
+		catch (const sp::Invalid_Argument&) { check(true, "hamming throws on length mismatch"); }
+
+		check(sp::common_prefix("flower", "flow") == "flow", "common_prefix");
+		check(sp::common_suffix("running", "jogging") == "ing", "common_suffix");
+		check(sp::common_prefix("abc", "xyz").empty(), "common_prefix (none)");
+		check(sp::common_suffix("abc", "xyz").empty(), "common_suffix (none)");
+
+		const StringToolkit cjkA{ "\xE4\xB8\xAD\xE6\x96\x87" };   // 2 chars
+		const StringToolkit cjkB{ "\xE4\xB8\xAD\xE8\x8B\xB1" };   // shares 1 char
+		check(sp::common_prefix(cjkA, cjkB) == "\xE4\xB8\xAD", "common_prefix (utf8 boundary)");
+
+		// human_duration
+		check(sp::human_duration(0) == "0s", "human_duration (zero)");
+		check(sp::human_duration(90061) == "1d 1h 1m 1s", "human_duration");
+		check(sp::human_duration(3600) == "1h", "human_duration (single unit)");
+
+		// Roman numerals
+		check(sp::to_roman(1994) == "MCMXCIV", "to_roman");
+		check(sp::to_roman(4) == "IV", "to_roman (subtractive)");
+		check(sp::to_roman(3999) == "MMMCMXCIX", "to_roman (max)");
+		check(sp::from_roman("MCMXCIV") == 1994, "from_roman");
+		check(sp::from_roman("xiv") == 14, "from_roman (lowercase)");
+
+		try { sp::to_roman(0); check(false, "to_roman throws on zero"); }
+		catch (const sp::Invalid_Argument&) { check(true, "to_roman throws on zero"); }
+		try { sp::to_roman(4000); check(false, "to_roman throws above 3999"); }
+		catch (const sp::Invalid_Argument&) { check(true, "to_roman throws above 3999"); }
+		try { sp::from_roman("IIII"); check(false, "from_roman throws on IIII"); }
+		catch (const sp::Invalid_Conversion&) { check(true, "from_roman throws on IIII"); }
+		try { sp::from_roman("VX"); check(false, "from_roman throws on VX"); }
+		catch (const sp::Invalid_Conversion&) { check(true, "from_roman throws on VX"); }
+
+		// HTML
+		check(sp::html::escape("<a href=\"x\">&'</a>")
+			== "&lt;a href=&quot;x&quot;&gt;&amp;&#39;&lt;/a&gt;", "html::escape");
+		check(sp::html::unescape("&lt;b&gt;&amp;&quot;&apos;&nbsp;")
+			== "<b>&\"'\xC2\xA0", "html::unescape (named)");
+		check(sp::html::unescape("&#65;&#x42;") == "AB", "html::unescape (numeric)");
+		check(sp::html::unescape("&#x4E2D;") == "\xE4\xB8\xAD", "html::unescape (cjk codepoint)");
+		check(sp::html::unescape(sp::html::escape("a<b>&\"c\"")) == "a<b>&\"c\"",
+			"html round-trip");
+
+		try { sp::html::unescape("&bogus;"); check(false, "html::unescape throws on unknown entity"); }
+		catch (const sp::Invalid_Conversion&) { check(true, "html::unescape throws on unknown entity"); }
+		try { sp::html::unescape("&amp"); check(false, "html::unescape throws on unterminated"); }
+		catch (const sp::Invalid_Conversion&) { check(true, "html::unescape throws on unterminated"); }
 	}
 
 	if (g_failed == 0)
