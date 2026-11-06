@@ -13,7 +13,7 @@ namespace
 	}
 }
 
-bool sp::utf8::is_valid(const StringToolkit& s)
+bool sp::utf8::is_valid(const cppString& s)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -61,7 +61,7 @@ bool sp::utf8::is_valid(const StringToolkit& s)
 	return true;
 }
 
-std::size_t sp::utf8::length(const StringToolkit& s)
+std::size_t sp::utf8::length(const cppString& s)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -76,7 +76,7 @@ std::size_t sp::utf8::length(const StringToolkit& s)
 	return count;
 }
 
-std::size_t sp::utf8::offset(const StringToolkit& s, std::size_t char_index)
+std::size_t sp::utf8::offset(const cppString& s, std::size_t char_index)
 {
 	const auto* bytes = reinterpret_cast<const unsigned char*>(s.data());
 	const std::size_t len = s.size();
@@ -93,10 +93,10 @@ std::size_t sp::utf8::offset(const StringToolkit& s, std::size_t char_index)
 		++count;
 	}
 
-	return (count == char_index) ? len : StringToolkit::npos;
+	return (count == char_index) ? len : cppString::npos;
 }
 
-sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start)
+sp::cppString sp::utf8::sub(const cppString& s, std::size_t start)
 {
 	if (s.is_empty())
 		throw sp::Empty_String("Cannot call utf8::sub on an empty string.");
@@ -109,10 +109,10 @@ sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start)
 	if (start == 0)
 		return s;
 
-	return StringToolkit(s.s_str().substr(offset(s, start)));
+	return cppString(s.s_str().substr(offset(s, start)));
 }
 
-sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start, std::size_t len)
+sp::cppString sp::utf8::sub(const cppString& s, std::size_t start, std::size_t len)
 {
 	if (s.is_empty())
 		throw sp::Empty_String("Cannot call utf8::sub on an empty string.");
@@ -123,7 +123,7 @@ sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start, std::
 		throw sp::Index_Out_Of_Range("Start index out of range in utf8::sub.");
 
 	if (len == 0)
-		return StringToolkit{};
+		return cppString{};
 
 	if (start + len > count)
 		throw sp::Index_Out_Of_Range("Length exceeds string bounds in utf8::sub.");
@@ -131,12 +131,12 @@ sp::StringToolkit sp::utf8::sub(const StringToolkit& s, std::size_t start, std::
 	const std::size_t start_byte = offset(s, start);
 	const std::size_t end_byte = offset(s, start + len);
 
-	return StringToolkit(s.s_str().substr(start_byte, end_byte - start_byte));
+	return cppString(s.s_str().substr(start_byte, end_byte - start_byte));
 }
 
-std::vector<sp::StringToolkit> sp::utf8::chars(const StringToolkit& s)
+std::vector<sp::cppString> sp::utf8::chars(const cppString& s)
 {
-	std::vector<StringToolkit> result;
+	std::vector<cppString> result;
 
 	const String& str = s.s_str();
 	std::size_t i = 0;
@@ -154,7 +154,7 @@ std::vector<sp::StringToolkit> sp::utf8::chars(const StringToolkit& s)
 	return result;
 }
 
-std::vector<char32_t> sp::utf8::codepoints(const StringToolkit& s)
+std::vector<char32_t> sp::utf8::codepoints(const cppString& s)
 {
 	std::vector<char32_t> result;
 
@@ -197,7 +197,7 @@ std::vector<char32_t> sp::utf8::codepoints(const StringToolkit& s)
 	return result;
 }
 
-sp::StringToolkit sp::utf8::from_codepoint(char32_t cp)
+sp::cppString sp::utf8::from_codepoint(char32_t cp)
 {
 	String out;
 
@@ -231,10 +231,10 @@ sp::StringToolkit sp::utf8::from_codepoint(char32_t cp)
 		throw sp::Invalid_Argument("Code point out of Unicode range.");
 	}
 
-	return StringToolkit(out);
+	return cppString(out);
 }
 
-sp::StringToolkit sp::utf8::reverse(const StringToolkit& s)
+sp::cppString sp::utf8::reverse(const cppString& s)
 {
 	auto parts = chars(s);
 	std::reverse(parts.begin(), parts.end());
@@ -243,5 +243,5 @@ sp::StringToolkit sp::utf8::reverse(const StringToolkit& s)
 	for (const auto& part : parts)
 		out += part.s_str();
 
-	return StringToolkit(out);
+	return cppString(out);
 }

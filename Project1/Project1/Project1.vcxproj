@@ -140,7 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="method.h" />
-    <ClInclude Include="StringToolkit.h" />
+    <ClInclude Include="cppString.h" />
     <ClInclude Include="utf8.h" />
     <ClInclude Include="coding.h" />
     <ClInclude Include="path.h" />
@@ -150,14 +150,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="method.cpp" />
-    <ClCompile Include="StringToolkit.cpp" />
+    <ClCompile Include="cppString.cpp" />
     <ClCompile Include="utf8.cpp" />
     <ClCompile Include="coding.cpp" />
     <ClCompile Include="path.cpp" />
     <ClCompile Include="checksum.cpp" />
     <ClCompile Include="validate.cpp" />
     <ClCompile Include="semver.cpp" />
-    <ClCompile Include="testStringToolkit.cpp" />
+    <ClCompile Include="testcppString.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

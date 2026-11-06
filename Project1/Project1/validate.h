@@ -21,7 +21,7 @@
 #ifndef __INC_VALIDATE_H__
 #define __INC_VALIDATE_H__
 
-#include "StringToolkit.h"
+#include "cppString.h"
 
 namespace sp
 {
@@ -29,21 +29,21 @@ namespace sp
 	namespace validate
 	{
 		// Dotted-quad IPv4. Leading zeros are rejected ("01.2.3.4" is invalid).
-		bool is_ipv4(const StringToolkit& s) noexcept;
+		bool is_ipv4(const cppString& s) noexcept;
 
 		// IPv6 including "::" compression and embedded IPv4 tails ("::ffff:1.2.3.4").
 		// Zone ids ("%eth0") and brackets ("[::1]") are NOT accepted.
-		bool is_ipv6(const StringToolkit& s) noexcept;
+		bool is_ipv6(const cppString& s) noexcept;
 
 		// Pragmatic e-mail check: one '@', sane local part, dotted domain labels.
-		bool is_email(const StringToolkit& s) noexcept;
+		bool is_email(const cppString& s) noexcept;
 
 		// 8-4-4-4-12 hex groups, case-insensitive: "550e8400-e29b-41d4-a716-446655440000".
-		bool is_uuid(const StringToolkit& s) noexcept;
+		bool is_uuid(const cppString& s) noexcept;
 
 		// "scheme://rest" with a valid scheme (letter, then letters/digits/+/-/.)
 		// and no whitespace in the remainder.
-		bool is_url(const StringToolkit& s) noexcept;
+		bool is_url(const cppString& s) noexcept;
 	}
 }
 

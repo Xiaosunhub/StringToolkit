@@ -4,67 +4,67 @@
 #include <iterator>
 #include <random>
 
-void sp::reverse_string(StringToolkit& str)
+void sp::reverse_string(cppString& str)
 {
 	str.reverse();
 }
 
-void sp::reverse_string_to(StringToolkit& str, StringToolkit& result)
+void sp::reverse_string_to(cppString& str, cppString& result)
 {
 	result = str;
 	result.reverse();
 }
 
-void sp::reverse_string_to(StringToolkit&& str, StringToolkit& result) noexcept
+void sp::reverse_string_to(cppString&& str, cppString& result) noexcept
 {
 	result = std::move(str);
 	result.reverse();
 }
 
-void sp::copy_to(StringToolkit& str, StringToolkit& result)
+void sp::copy_to(cppString& str, cppString& result)
 {
 	result = str;
 }
 
-void sp::copy_to(StringToolkit&& str, StringToolkit& result) noexcept
+void sp::copy_to(cppString&& str, cppString& result) noexcept
 {
 	result = std::move(str);
 }
 
-void sp::move_to(StringToolkit& str, StringToolkit& result)
+void sp::move_to(cppString& str, cppString& result)
 {
 	result = std::move(str);
 	str.reset();
 }
 
-void sp::move_to(StringToolkit&& str, StringToolkit& result) noexcept
+void sp::move_to(cppString&& str, cppString& result) noexcept
 {
-	result = std::exchange(str, StringToolkit{});
+	result = std::exchange(str, cppString{});
 }
 
-void sp::fill_with(StringToolkit& str, char ch)
+void sp::fill_with(cppString& str, char ch)
 {
 	str.reset(std::string(str.size(), ch));
 }
 
-void sp::fill(StringToolkit& str, char ch, std::size_t count)
+void sp::fill(cppString& str, char ch, std::size_t count)
 {
 	str.reset(std::string(count, ch));
 }
 
-void sp::remove_prefix(StringToolkit& str, const StringToolkit& prefix)
+void sp::remove_prefix(cppString& str, const cppString& prefix)
 {
 	str.remove_prefix(prefix);
 }
 
-void sp::remove_suffix(StringToolkit& str, const StringToolkit& suffix)
+void sp::remove_suffix(cppString& str, const cppString& suffix)
 {
 	str.remove_suffix(suffix);
 }
 
-sp::StringToolkit sp::join(const std::vector<StringToolkit>& parts, const StringToolkit& separator)
+sp::cppString sp::join(const std::vector<cppString>& parts, const cppString& separator)
 {
-	StringToolkit result;
+	cppString result;
 
 	for (std::size_t i = 0; i < parts.size(); ++i)
 	{
@@ -77,14 +77,14 @@ sp::StringToolkit sp::join(const std::vector<StringToolkit>& parts, const String
 	return result;
 }
 
-sp::StringToolkit sp::join(const std::vector<StringToolkit>& parts, char separator)
+sp::cppString sp::join(const std::vector<cppString>& parts, char separator)
 {
-	return sp::join(parts, StringToolkit(String(1, separator)));
+	return sp::join(parts, cppString(String(1, separator)));
 }
 
-std::vector<sp::StringToolkit> sp::split_lines(const StringToolkit& str)
+std::vector<sp::cppString> sp::split_lines(const cppString& str)
 {
-	std::vector<StringToolkit> lines;
+	std::vector<cppString> lines;
 
 	const String& src = str.s_str();
 	std::size_t start = 0;
@@ -113,7 +113,7 @@ std::vector<sp::StringToolkit> sp::split_lines(const StringToolkit& str)
 	return lines;
 }
 
-void sp::pad_left(StringToolkit& str, std::size_t width, char fill)
+void sp::pad_left(cppString& str, std::size_t width, char fill)
 {
 	const std::size_t count = utf8::length(str);
 	if (count >= width)
@@ -122,7 +122,7 @@ void sp::pad_left(StringToolkit& str, std::size_t width, char fill)
 	str.insert(0, String(count < width ? width - count : 0, fill));
 }
 
-void sp::pad_right(StringToolkit& str, std::size_t width, char fill)
+void sp::pad_right(cppString& str, std::size_t width, char fill)
 {
 	const std::size_t count = utf8::length(str);
 	if (count >= width)
@@ -131,7 +131,7 @@ void sp::pad_right(StringToolkit& str, std::size_t width, char fill)
 	str.append(width - count, fill);
 }
 
-void sp::capitalize(StringToolkit& str)
+void sp::capitalize(cppString& str)
 {
 	if (str.empty())
 		return;
@@ -144,7 +144,7 @@ void sp::capitalize(StringToolkit& str)
 		data[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(data[i])));
 }
 
-void sp::swap_case(StringToolkit& str)
+void sp::swap_case(cppString& str)
 {
 	String& data = str.get_changable_string();
 
@@ -159,18 +159,18 @@ void sp::swap_case(StringToolkit& str)
 	}
 }
 
-void sp::replace_first(StringToolkit& str, const StringToolkit& from, const StringToolkit& to)
+void sp::replace_first(cppString& str, const cppString& from, const cppString& to)
 {
 	if (from.empty())
 		throw sp::Invalid_Argument("The substring to replace cannot be empty.");
 
 	const auto pos = str.find(from);
 
-	if (pos != StringToolkit::npos)
+	if (pos != cppString::npos)
 		str.replace(pos, from.size(), to);
 }
 
-sp::StringToolkit sp::read_file(const String& path)
+sp::cppString sp::read_file(const String& path)
 {
 	std::ifstream stream(path, std::ios::binary);
 
@@ -179,15 +179,15 @@ sp::StringToolkit sp::read_file(const String& path)
 
 	String data((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 
-	return StringToolkit(std::move(data));
+	return cppString(std::move(data));
 }
 
-std::vector<sp::StringToolkit> sp::read_lines(const String& path)
+std::vector<sp::cppString> sp::read_lines(const String& path)
 {
 	return sp::split_lines(sp::read_file(path));
 }
 
-void sp::write_file(const String& path, const StringToolkit& data, bool append)
+void sp::write_file(const String& path, const cppString& data, bool append)
 {
 	std::ofstream stream(
 		path,
@@ -205,7 +205,7 @@ void sp::write_file(const String& path, const StringToolkit& data, bool append)
 
 // ---- random ----
 
-sp::StringToolkit sp::generate_random(std::size_t length, const StringToolkit& charset)
+sp::cppString sp::generate_random(std::size_t length, const cppString& charset)
 {
 	const String& chars = charset.s_str();
 
@@ -222,7 +222,7 @@ sp::StringToolkit sp::generate_random(std::size_t length, const StringToolkit& c
 	for (std::size_t i = 0; i < length; ++i)
 		result += chars[pick(generator)];
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
 // ---- case-insensitive conveniences (ASCII only) ----
@@ -238,7 +238,7 @@ namespace
 	}
 }
 
-bool sp::icontains(const StringToolkit& str, const StringToolkit& sub)
+bool sp::icontains(const cppString& str, const cppString& sub)
 {
 	const String haystack = to_lower_ascii(str.s_str());
 	const String needle = to_lower_ascii(sub.s_str());
@@ -246,7 +246,7 @@ bool sp::icontains(const StringToolkit& str, const StringToolkit& sub)
 	return haystack.find(needle) != String::npos;
 }
 
-bool sp::istarts_with(const StringToolkit& str, const StringToolkit& prefix)
+bool sp::istarts_with(const cppString& str, const cppString& prefix)
 {
 	const String haystack = to_lower_ascii(str.s_str());
 	const String needle = to_lower_ascii(prefix.s_str());
@@ -254,7 +254,7 @@ bool sp::istarts_with(const StringToolkit& str, const StringToolkit& prefix)
 	return haystack.starts_with(needle);
 }
 
-bool sp::iends_with(const StringToolkit& str, const StringToolkit& suffix)
+bool sp::iends_with(const cppString& str, const cppString& suffix)
 {
 	const String haystack = to_lower_ascii(str.s_str());
 	const String needle = to_lower_ascii(suffix.s_str());
@@ -264,7 +264,7 @@ bool sp::iends_with(const StringToolkit& str, const StringToolkit& suffix)
 
 // ---- splitting ----
 
-std::vector<sp::StringToolkit> sp::split_by_any(const StringToolkit& str, const StringToolkit& delimiters)
+std::vector<sp::cppString> sp::split_by_any(const cppString& str, const cppString& delimiters)
 {
 	const String& src = str.s_str();
 	const String& delims = delimiters.s_str();
@@ -272,7 +272,7 @@ std::vector<sp::StringToolkit> sp::split_by_any(const StringToolkit& str, const 
 	if (delims.empty())
 		throw sp::Invalid_Argument("Delimiters cannot be empty in split_by_any.");
 
-	std::vector<StringToolkit> fields;
+	std::vector<cppString> fields;
 
 	std::size_t start = 0;
 
@@ -302,7 +302,7 @@ std::vector<sp::StringToolkit> sp::split_by_any(const StringToolkit& str, const 
 
 // ---- pattern matching ----
 
-bool sp::wildcard_match(const StringToolkit& str, const StringToolkit& pattern)
+bool sp::wildcard_match(const cppString& str, const cppString& pattern)
 {
 	const String& s = str.s_str();
 	const String& p = pattern.s_str();
@@ -390,7 +390,7 @@ namespace
 	}
 }
 
-void sp::to_snake_case(StringToolkit& str)
+void sp::to_snake_case(cppString& str)
 {
 	const auto words = split_words(str.s_str());
 
@@ -404,10 +404,10 @@ void sp::to_snake_case(StringToolkit& str)
 		result += to_lower_ascii(words[i]);
 	}
 
-	str = StringToolkit(std::move(result));
+	str = cppString(std::move(result));
 }
 
-void sp::to_kebab_case(StringToolkit& str)
+void sp::to_kebab_case(cppString& str)
 {
 	const auto words = split_words(str.s_str());
 
@@ -421,10 +421,10 @@ void sp::to_kebab_case(StringToolkit& str)
 		result += to_lower_ascii(words[i]);
 	}
 
-	str = StringToolkit(std::move(result));
+	str = cppString(std::move(result));
 }
 
-void sp::to_camel_case(StringToolkit& str)
+void sp::to_camel_case(cppString& str)
 {
 	const auto words = split_words(str.s_str());
 
@@ -440,12 +440,12 @@ void sp::to_camel_case(StringToolkit& str)
 		result += word;
 	}
 
-	str = StringToolkit(std::move(result));
+	str = cppString(std::move(result));
 }
 
 // ---- JSON ----
 
-sp::StringToolkit sp::json::escape(const StringToolkit& text)
+sp::cppString sp::json::escape(const cppString& text)
 {
 	static const char* const HEX = "0123456789abcdef";
 
@@ -480,7 +480,7 @@ sp::StringToolkit sp::json::escape(const StringToolkit& text)
 		}
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
 namespace
@@ -538,7 +538,7 @@ namespace
 	}
 }
 
-sp::StringToolkit sp::json::unescape(const StringToolkit& text)
+sp::cppString sp::json::unescape(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -597,12 +597,12 @@ sp::StringToolkit sp::json::unescape(const StringToolkit& text)
 		}
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
 // ---- CSV ----
 
-sp::StringToolkit sp::csv::escape(const StringToolkit& field)
+sp::cppString sp::csv::escape(const cppString& field)
 {
 	const String& src = field.s_str();
 
@@ -627,14 +627,14 @@ sp::StringToolkit sp::csv::escape(const StringToolkit& field)
 
 	result += '"';
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-std::vector<sp::StringToolkit> sp::csv::split(const StringToolkit& line)
+std::vector<sp::cppString> sp::csv::split(const cppString& line)
 {
 	const String& src = line.s_str();
 
-	std::vector<StringToolkit> fields;
+	std::vector<cppString> fields;
 
 	std::size_t i = 0;
 
@@ -689,7 +689,7 @@ std::vector<sp::StringToolkit> sp::csv::split(const StringToolkit& line)
 
 // ---- statistics ----
 
-std::size_t sp::word_count(const StringToolkit& str)
+std::size_t sp::word_count(const cppString& str)
 {
 	std::size_t words = 0;
 	bool in_word = false;
@@ -712,7 +712,7 @@ std::size_t sp::word_count(const StringToolkit& str)
 	return words;
 }
 
-std::size_t sp::levenshtein(const StringToolkit& a, const StringToolkit& b)
+std::size_t sp::levenshtein(const cppString& a, const cppString& b)
 {
 	const auto lhs = utf8::chars(a);
 	const auto rhs = utf8::chars(b);
@@ -750,7 +750,7 @@ std::size_t sp::levenshtein(const StringToolkit& a, const StringToolkit& b)
 	return previous[n];
 }
 
-double sp::similarity(const StringToolkit& a, const StringToolkit& b)
+double sp::similarity(const cppString& a, const cppString& b)
 {
 	const std::size_t longest = (std::max)(utf8::length(a), utf8::length(b));
 
@@ -760,10 +760,10 @@ double sp::similarity(const StringToolkit& a, const StringToolkit& b)
 	return 1.0 - static_cast<double>(levenshtein(a, b)) / static_cast<double>(longest);
 }
 
-sp::StringToolkit sp::longest_common_prefix(const std::vector<StringToolkit>& parts)
+sp::cppString sp::longest_common_prefix(const std::vector<cppString>& parts)
 {
 	if (parts.empty())
-		return StringToolkit{};
+		return cppString{};
 
 	const String* first = &parts.front().s_str();
 
@@ -800,17 +800,17 @@ sp::StringToolkit sp::longest_common_prefix(const std::vector<StringToolkit>& pa
 		--length;
 	}
 
-	return StringToolkit{ first->substr(0, length) };
+	return cppString{ first->substr(0, length) };
 }
 
 // ---- layout ----
 
-std::vector<sp::StringToolkit> sp::wrap(const StringToolkit& str, std::size_t width)
+std::vector<sp::cppString> sp::wrap(const cppString& str, std::size_t width)
 {
 	if (width == 0)
 		throw sp::Invalid_Argument("Width must be greater than zero in wrap.");
 
-	std::vector<StringToolkit> lines;
+	std::vector<cppString> lines;
 
 	for (const auto& line : split_lines(str))
 	{
@@ -820,7 +820,7 @@ std::vector<sp::StringToolkit> sp::wrap(const StringToolkit& str, std::size_t wi
 			continue;
 		}
 
-		StringToolkit current;
+		cppString current;
 		std::size_t current_width = 0;
 
 		for (const auto& word : line.split(' '))
@@ -853,7 +853,7 @@ std::vector<sp::StringToolkit> sp::wrap(const StringToolkit& str, std::size_t wi
 	return lines;
 }
 
-void sp::indent(StringToolkit& str, const StringToolkit& prefix)
+void sp::indent(cppString& str, const cppString& prefix)
 {
 	const auto lines = split_lines(str);
 
@@ -870,10 +870,10 @@ void sp::indent(StringToolkit& str, const StringToolkit& prefix)
 		result += lines[i].s_str();
 	}
 
-	str = StringToolkit(std::move(result));
+	str = cppString(std::move(result));
 }
 
-sp::StringToolkit sp::thousands_sep(long long value, char sep)
+sp::cppString sp::thousands_sep(long long value, char sep)
 {
 	const bool negative = value < 0;
 	const unsigned long long magnitude = negative
@@ -896,15 +896,15 @@ sp::StringToolkit sp::thousands_sep(long long value, char sep)
 
 	std::ranges::reverse(grouped);
 
-	return StringToolkit{ (negative ? String("-") : String()) + grouped };
+	return cppString{ (negative ? String("-") : String()) + grouped };
 }
 
-sp::StringToolkit sp::human_size(unsigned long long bytes)
+sp::cppString sp::human_size(unsigned long long bytes)
 {
 	static constexpr const char* UNITS[] = { "B", "KB", "MB", "GB", "TB", "PB" };
 
 	if (bytes < 1024)
-		return StringToolkit{ std::to_string(bytes) + " B" };
+		return cppString{ std::to_string(bytes) + " B" };
 
 	double value = static_cast<double>(bytes);
 	std::size_t unit = 0;
@@ -915,15 +915,15 @@ sp::StringToolkit sp::human_size(unsigned long long bytes)
 		++unit;
 	}
 
-	StringToolkit number{ std::format("{:.1f}", value) };
+	cppString number{ std::format("{:.1f}", value) };
 
 	if (number.endsWith(".0"))
 		number.resize(number.size() - 2);
 
-	return StringToolkit{ number.s_str() + " " + UNITS[unit] };
+	return cppString{ number.s_str() + " " + UNITS[unit] };
 }
 
-sp::StringToolkit sp::render(const StringToolkit& tmpl, const std::map<StringToolkit, StringToolkit>& vars)
+sp::cppString sp::render(const cppString& tmpl, const std::map<cppString, cppString>& vars)
 {
 	const String& src = tmpl.s_str();
 
@@ -952,7 +952,7 @@ sp::StringToolkit sp::render(const StringToolkit& tmpl, const std::map<StringToo
 		result += src.substr(pos, open - pos);
 
 		const String key = src.substr(open + 2, close - (open + 2));
-		const auto it = vars.find(StringToolkit{ key });
+		const auto it = vars.find(cppString{ key });
 
 		if (it != vars.end())
 			result += it->second.s_str();
@@ -962,19 +962,19 @@ sp::StringToolkit sp::render(const StringToolkit& tmpl, const std::map<StringToo
 		pos = close + 2;
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-std::pair<sp::StringToolkit, sp::StringToolkit> sp::split_pair(
-	const StringToolkit& str, const StringToolkit& delimiter, bool first)
+std::pair<sp::cppString, sp::cppString> sp::split_pair(
+	const cppString& str, const cppString& delimiter, bool first)
 {
 	if (delimiter.empty())
 		throw sp::Invalid_Argument("Delimiter cannot be empty in split_pair.");
 
 	const std::size_t pos = first ? str.find(delimiter) : str.rfind(delimiter);
 
-	if (pos == StringToolkit::npos)
-		return { str, StringToolkit{} };
+	if (pos == cppString::npos)
+		return { str, cppString{} };
 
 	return {
 		str.substr(0, pos),
@@ -984,7 +984,7 @@ std::pair<sp::StringToolkit, sp::StringToolkit> sp::split_pair(
 
 // ---- convenience ----
 
-void sp::truncate(StringToolkit& str, std::size_t max_chars, const StringToolkit& ellipsis)
+void sp::truncate(cppString& str, std::size_t max_chars, const cppString& ellipsis)
 {
 	const std::size_t length = utf8::length(str);
 
@@ -1002,7 +1002,7 @@ void sp::truncate(StringToolkit& str, std::size_t max_chars, const StringToolkit
 	str = utf8::sub(str, 0, max_chars - ellipsis_len) + ellipsis;
 }
 
-void sp::slug(StringToolkit& str)
+void sp::slug(cppString& str)
 {
 	String result;
 	result.reserve(str.size());
@@ -1029,17 +1029,17 @@ void sp::slug(StringToolkit& str)
 	while (!result.empty() && result.back() == '-')
 		result.pop_back();
 
-	str = StringToolkit(std::move(result));
+	str = cppString(std::move(result));
 }
 
-std::vector<sp::StringToolkit> sp::chunk(const StringToolkit& str, std::size_t size)
+std::vector<sp::cppString> sp::chunk(const cppString& str, std::size_t size)
 {
 	if (size == 0)
 		throw sp::Invalid_Argument("Chunk size must be greater than zero in chunk.");
 
 	const std::size_t length = utf8::length(str);
 
-	std::vector<StringToolkit> chunks;
+	std::vector<cppString> chunks;
 	chunks.reserve((length + size - 1) / size);
 
 	for (std::size_t start = 0; start < length; start += size)
@@ -1048,7 +1048,7 @@ std::vector<sp::StringToolkit> sp::chunk(const StringToolkit& str, std::size_t s
 	return chunks;
 }
 
-bool sp::to_bool(const StringToolkit& str)
+bool sp::to_bool(const cppString& str)
 {
 	String lower = str.s_str();
 	std::ranges::transform(lower, lower.begin(), [](char c) {
@@ -1068,7 +1068,7 @@ bool sp::to_bool(const StringToolkit& str)
 
 // ---- string distance & diff helpers ----
 
-std::size_t sp::hamming(const StringToolkit& a, const StringToolkit& b)
+std::size_t sp::hamming(const cppString& a, const cppString& b)
 {
 	const auto lhs = utf8::chars(a);
 	const auto rhs = utf8::chars(b);
@@ -1087,7 +1087,7 @@ std::size_t sp::hamming(const StringToolkit& a, const StringToolkit& b)
 	return distance;
 }
 
-sp::StringToolkit sp::common_prefix(const StringToolkit& a, const StringToolkit& b)
+sp::cppString sp::common_prefix(const cppString& a, const cppString& b)
 {
 	const String& lhs = a.s_str();
 	const String& rhs = b.s_str();
@@ -1105,10 +1105,10 @@ sp::StringToolkit sp::common_prefix(const StringToolkit& a, const StringToolkit&
 		--length;
 	}
 
-	return StringToolkit{ lhs.substr(0, length) };
+	return cppString{ lhs.substr(0, length) };
 }
 
-sp::StringToolkit sp::common_suffix(const StringToolkit& a, const StringToolkit& b)
+sp::cppString sp::common_suffix(const cppString& a, const cppString& b)
 {
 	const String& lhs = a.s_str();
 	const String& rhs = b.s_str();
@@ -1130,15 +1130,15 @@ sp::StringToolkit sp::common_suffix(const StringToolkit& a, const StringToolkit&
 		--length;
 	}
 
-	return StringToolkit{ lhs.substr(lhs.size() - length) };
+	return cppString{ lhs.substr(lhs.size() - length) };
 }
 
 // ---- formatting ----
 
-sp::StringToolkit sp::human_duration(unsigned long long seconds)
+sp::cppString sp::human_duration(unsigned long long seconds)
 {
 	if (seconds == 0)
-		return StringToolkit{ "0s" };
+		return cppString{ "0s" };
 
 	struct Unit { unsigned long long size; const char* suffix; };
 	static constexpr Unit UNITS[] = {
@@ -1162,10 +1162,10 @@ sp::StringToolkit sp::human_duration(unsigned long long seconds)
 		result += unit.suffix;
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-sp::StringToolkit sp::to_roman(int value)
+sp::cppString sp::to_roman(int value)
 {
 	if (value < 1 || value > 3999)
 		throw sp::Invalid_Argument("Roman numerals only cover 1..3999 in to_roman.");
@@ -1188,10 +1188,10 @@ sp::StringToolkit sp::to_roman(int value)
 		}
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-int sp::from_roman(const StringToolkit& text)
+int sp::from_roman(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -1247,7 +1247,7 @@ int sp::from_roman(const StringToolkit& text)
 
 // ---- HTML ----
 
-sp::StringToolkit sp::html::escape(const StringToolkit& text)
+sp::cppString sp::html::escape(const cppString& text)
 {
 	String result;
 	result.reserve(text.size());
@@ -1265,10 +1265,10 @@ sp::StringToolkit sp::html::escape(const StringToolkit& text)
 		}
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-sp::StringToolkit sp::html::unescape(const StringToolkit& text)
+sp::cppString sp::html::unescape(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -1375,5 +1375,248 @@ sp::StringToolkit sp::html::unescape(const StringToolkit& text)
 		i = semi;
 	}
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
+}
+
+// ---- more text tools ----
+
+void sp::title_case(cppString& str)
+{
+	String result = str.s_str();
+
+	bool at_word_start = true;
+
+	for (auto& c : result)
+	{
+		const unsigned char uc = static_cast<unsigned char>(c);
+
+		if (std::isalpha(uc))
+		{
+			c = static_cast<char>(at_word_start ? std::toupper(uc) : std::tolower(uc));
+			at_word_start = false;
+		}
+		else
+		{
+			at_word_start = true;
+		}
+	}
+
+	str = cppString(std::move(result));
+}
+
+sp::cppString sp::center(const cppString& str, std::size_t width, char fill)
+{
+	const std::size_t length = utf8::length(str);
+
+	if (length >= width)
+		return str;
+
+	const std::size_t total = width - length;
+	const std::size_t left = total / 2;
+	const std::size_t right = total - left; // the odd one goes right
+
+	String result;
+	result.reserve(str.size() + total);
+	result.append(left, fill);
+	result += str.s_str();
+	result.append(right, fill);
+
+	return cppString(std::move(result));
+}
+
+void sp::expand_tabs(cppString& str, std::size_t tab_size)
+{
+	if (tab_size == 0)
+		throw sp::Invalid_Argument("Tab size must be greater than zero in expand_tabs.");
+
+	String result;
+	result.reserve(str.size());
+
+	std::size_t column = 0; // in UTF-8 characters
+
+	for (const auto& ch : utf8::chars(str))
+	{
+		if (ch == "\t")
+		{
+			const std::size_t spaces = tab_size - (column % tab_size);
+
+			result.append(spaces, ' ');
+			column += spaces;
+		}
+		else
+		{
+			result += ch.s_str();
+			column = (ch == "\n" || ch == "\r") ? 0 : column + 1;
+		}
+	}
+
+	str = cppString(std::move(result));
+}
+
+void sp::reverse_words(cppString& str)
+{
+	std::vector<String> words;
+	String current;
+
+	for (const char c : str.s_str())
+	{
+		if (std::isspace(static_cast<unsigned char>(c)))
+		{
+			if (!current.empty())
+			{
+				words.push_back(std::move(current));
+				current.clear();
+			}
+		}
+		else
+		{
+			current += c;
+		}
+	}
+
+	if (!current.empty())
+		words.push_back(std::move(current));
+
+	String result;
+
+	for (auto it = words.rbegin(); it != words.rend(); ++it)
+	{
+		if (!result.empty())
+			result += ' ';
+
+		result += *it;
+	}
+
+	str = cppString(std::move(result));
+}
+
+std::vector<sp::cppString> sp::ngrams(const cppString& str, std::size_t n)
+{
+	if (n == 0)
+		throw sp::Invalid_Argument("n must be greater than zero in ngrams.");
+
+	const auto chars = utf8::chars(str);
+
+	std::vector<cppString> grams;
+
+	if (chars.size() < n)
+		return grams;
+
+	grams.reserve(chars.size() - n + 1);
+
+	for (std::size_t i = 0; i + n <= chars.size(); ++i)
+	{
+		String gram;
+
+		for (std::size_t j = 0; j < n; ++j)
+			gram += chars[i + j].s_str();
+
+		grams.emplace_back(std::move(gram));
+	}
+
+	return grams;
+}
+
+bool sp::is_palindrome(const cppString& str) noexcept
+{
+	const auto chars = utf8::chars(str);
+
+	for (std::size_t i = 0, j = chars.size(); i < j / 2; ++i)
+	{
+		if (chars[i] != chars[j - 1 - i])
+			return false;
+	}
+
+	return true;
+}
+
+sp::cppString sp::soundex(const cppString& str)
+{
+	auto code_of = [](char c) -> char
+	{
+		switch (static_cast<char>(std::toupper(static_cast<unsigned char>(c))))
+		{
+		case 'B': case 'F': case 'P': case 'V':              return '1';
+		case 'C': case 'G': case 'J': case 'K':
+		case 'Q': case 'S': case 'X': case 'Z':              return '2';
+		case 'D': case 'T':                                  return '3';
+		case 'L':                                            return '4';
+		case 'M': case 'N':                                  return '5';
+		case 'R':                                            return '6';
+		default:                                             return '0';
+		}
+	};
+
+	const String& src = str.s_str();
+
+	char first = '\0';
+	std::size_t start = 0;
+
+	while (start < src.size()
+		&& !std::isalpha(static_cast<unsigned char>(src[start])))
+	{
+		++start;
+	}
+
+	if (start == src.size())
+		throw sp::Invalid_Argument("No letters in soundex.");
+
+	first = static_cast<char>(std::toupper(static_cast<unsigned char>(src[start])));
+
+	String digits;
+	char previous_code = code_of(src[start]);
+
+	for (std::size_t i = start + 1; i < src.size() && digits.size() < 3; ++i)
+	{
+		const char c = src[i];
+
+		if (!std::isalpha(static_cast<unsigned char>(c)))
+		{
+			previous_code = '0'; // any non-letter separates adjacent codes
+			continue;
+		}
+
+		const char up = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+		const char code = code_of(c);
+
+		if (code != '0' && code != previous_code)
+			digits += code;
+
+		// H and W do not separate adjacent codes; vowels do.
+		if (code != '0' || (up != 'H' && up != 'W'))
+			previous_code = code;
+	}
+
+	digits.append(3 - digits.size(), '0');
+
+	return cppString{ String(1, first) + digits };
+}
+
+sp::cppString sp::uuid_v4()
+{
+	static thread_local std::mt19937_64 generator{ std::random_device{}() };
+
+	unsigned char bytes[16];
+
+	for (auto& byte : bytes)
+		byte = static_cast<unsigned char>(generator() & 0xFF);
+
+	bytes[6] = static_cast<unsigned char>((bytes[6] & 0x0F) | 0x40); // version 4
+	bytes[8] = static_cast<unsigned char>((bytes[8] & 0x3F) | 0x80); // variant 1
+
+	static constexpr char HEX[] = "0123456789abcdef";
+
+	String result;
+	result.reserve(36);
+
+	for (std::size_t i = 0; i < 16; ++i)
+	{
+		if (i == 4 || i == 6 || i == 8 || i == 10)
+			result += '-';
+
+		result += HEX[(bytes[i] >> 4) & 0xF];
+		result += HEX[bytes[i] & 0xF];
+	}
+
+	return cppString(std::move(result));
 }

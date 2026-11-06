@@ -1,4 +1,6 @@
 #include "coding.h"
+#include <cctype>
+#include <sstream>
 
 namespace
 {
@@ -39,11 +41,11 @@ namespace
 	}
 }
 
-sp::StringToolkit sp::coding::toBase64(const StringToolkit& data)
+sp::cppString sp::coding::toBase64(const cppString& data)
 {
 	const String& src = data.s_str();
 
-	StringToolkit result;
+	cppString result;
 	result.reserve(((src.size() + 2) / 3) * 4);
 
 	std::size_t i = 0;
@@ -88,7 +90,7 @@ sp::StringToolkit sp::coding::toBase64(const StringToolkit& data)
 	return result;
 }
 
-sp::StringToolkit sp::coding::fromBase64(const StringToolkit& text)
+sp::cppString sp::coding::fromBase64(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -122,14 +124,14 @@ sp::StringToolkit sp::coding::fromBase64(const StringToolkit& text)
 		}
 	}
 
-	return StringToolkit(bytes);
+	return cppString(bytes);
 }
 
-sp::StringToolkit sp::coding::toHex(const StringToolkit& data, bool uppercase)
+sp::cppString sp::coding::toHex(const cppString& data, bool uppercase)
 {
 	const String& src = data.s_str();
 
-	StringToolkit result;
+	cppString result;
 	result.reserve(src.size() * 2);
 
 	for (char raw : src)
@@ -142,7 +144,7 @@ sp::StringToolkit sp::coding::toHex(const StringToolkit& data, bool uppercase)
 	return result;
 }
 
-sp::StringToolkit sp::coding::fromHex(const StringToolkit& text)
+sp::cppString sp::coding::fromHex(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -176,14 +178,14 @@ sp::StringToolkit sp::coding::fromHex(const StringToolkit& text)
 	if (high >= 0)
 		throw sp::Invalid_Conversion("Odd number of hex digits in fromHex.");
 
-	return StringToolkit(bytes);
+	return cppString(bytes);
 }
 
-sp::StringToolkit sp::coding::urlEncode(const StringToolkit& data)
+sp::cppString sp::coding::urlEncode(const cppString& data)
 {
 	const String& src = data.s_str();
 
-	StringToolkit result;
+	cppString result;
 	result.reserve(src.size());
 
 	for (char raw : src)
@@ -205,7 +207,7 @@ sp::StringToolkit sp::coding::urlEncode(const StringToolkit& data)
 	return result;
 }
 
-sp::StringToolkit sp::coding::urlDecode(const StringToolkit& text)
+sp::cppString sp::coding::urlDecode(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -240,7 +242,7 @@ sp::StringToolkit sp::coding::urlDecode(const StringToolkit& text)
 		}
 	}
 
-	return StringToolkit(bytes);
+	return cppString(bytes);
 }
 
 namespace
@@ -251,12 +253,12 @@ namespace
 	}
 }
 
-bool sp::coding::is_binary(const StringToolkit& text) noexcept
+bool sp::coding::is_binary(const cppString& text) noexcept
 {
 	return all_digits_in(text.s_str(), "01");
 }
 
-sp::StringToolkit sp::coding::toBinary(const StringToolkit& data)
+sp::cppString sp::coding::toBinary(const cppString& data)
 {
 	String bits;
 	bits.reserve(data.size() * 8);
@@ -269,10 +271,10 @@ sp::StringToolkit sp::coding::toBinary(const StringToolkit& data)
 			bits += static_cast<char>('0' + ((byte >> shift) & 1));
 	}
 
-	return StringToolkit(std::move(bits));
+	return cppString(std::move(bits));
 }
 
-sp::StringToolkit sp::coding::fromBinary(const StringToolkit& text)
+sp::cppString sp::coding::fromBinary(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -295,15 +297,15 @@ sp::StringToolkit sp::coding::fromBinary(const StringToolkit& text)
 		bytes += static_cast<char>(byte);
 	}
 
-	return StringToolkit(std::move(bytes));
+	return cppString(std::move(bytes));
 }
 
-bool sp::coding::is_octal(const StringToolkit& text) noexcept
+bool sp::coding::is_octal(const cppString& text) noexcept
 {
 	return all_digits_in(text.s_str(), "01234567");
 }
 
-sp::StringToolkit sp::coding::toOctal(const StringToolkit& data)
+sp::cppString sp::coding::toOctal(const cppString& data)
 {
 	String digits;
 	digits.reserve(data.size() * 3);
@@ -317,10 +319,10 @@ sp::StringToolkit sp::coding::toOctal(const StringToolkit& data)
 		digits += static_cast<char>('0' + (byte & 7));
 	}
 
-	return StringToolkit(std::move(digits));
+	return cppString(std::move(digits));
 }
 
-sp::StringToolkit sp::coding::fromOctal(const StringToolkit& text)
+sp::cppString sp::coding::fromOctal(const cppString& text)
 {
 	const String& src = text.s_str();
 
@@ -341,16 +343,16 @@ sp::StringToolkit sp::coding::fromOctal(const StringToolkit& text)
 		bytes += static_cast<char>(byte);
 	}
 
-	return StringToolkit(std::move(bytes));
+	return cppString(std::move(bytes));
 }
 
-sp::StringToolkit sp::coding::toBase(unsigned long long value, unsigned base)
+sp::cppString sp::coding::toBase(unsigned long long value, unsigned base)
 {
 	if (base < 2 || base > 36)
 		throw sp::Invalid_Argument("Base must be between 2 and 36 in toBase.");
 
 	if (value == 0)
-		return StringToolkit{ "0" };
+		return cppString{ "0" };
 
 	static constexpr char DIGITS[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -364,10 +366,10 @@ sp::StringToolkit sp::coding::toBase(unsigned long long value, unsigned base)
 
 	std::ranges::reverse(result);
 
-	return StringToolkit(std::move(result));
+	return cppString(std::move(result));
 }
 
-long long sp::coding::fromBase(const StringToolkit& text, unsigned base)
+long long sp::coding::fromBase(const cppString& text, unsigned base)
 {
 	if (base < 2 || base > 36)
 		throw sp::Invalid_Argument("Base must be between 2 and 36 in fromBase.");
@@ -441,11 +443,11 @@ namespace
 	}
 }
 
-sp::StringToolkit sp::coding::toBase64Url(const StringToolkit& data)
+sp::cppString sp::coding::toBase64Url(const cppString& data)
 {
 	const String& src = data.s_str();
 
-	StringToolkit result;
+	cppString result;
 	result.reserve((src.size() * 8 + 5) / 6);
 
 	std::size_t i = 0;
@@ -487,7 +489,7 @@ sp::StringToolkit sp::coding::toBase64Url(const StringToolkit& data)
 	return result;
 }
 
-sp::StringToolkit sp::coding::fromBase64Url(const StringToolkit& text)
+sp::cppString sp::coding::fromBase64Url(const cppString& text)
 {
 	String src = text.s_str();
 
@@ -498,7 +500,7 @@ sp::StringToolkit sp::coding::fromBase64Url(const StringToolkit& text)
 	if (src.size() % 4 == 1)
 		throw sp::Invalid_Conversion("Invalid base64url length in fromBase64Url.");
 
-	StringToolkit result;
+	cppString result;
 	result.reserve((src.size() * 6) / 8);
 
 	unsigned accumulator = 0;
@@ -522,4 +524,152 @@ sp::StringToolkit sp::coding::fromBase64Url(const StringToolkit& text)
 	}
 
 	return result;
+}
+
+// ---- classical ciphers ----
+
+namespace
+{
+	char caesar_shift(char c, int shift)
+	{
+		const int s = ((shift % 26) + 26) % 26;
+
+		if (c >= 'a' && c <= 'z')
+			return static_cast<char>('a' + (c - 'a' + s) % 26);
+
+		if (c >= 'A' && c <= 'Z')
+			return static_cast<char>('A' + (c - 'A' + s) % 26);
+
+		return c;
+	}
+}
+
+sp::cppString sp::coding::rot13(const cppString& text)
+{
+	return caesar(text, 13);
+}
+
+sp::cppString sp::coding::caesar(const cppString& text, int shift)
+{
+	String result = text.s_str();
+
+	for (auto& c : result)
+		c = caesar_shift(c, shift);
+
+	return cppString(std::move(result));
+}
+
+// ---- Morse code ----
+
+namespace
+{
+	const char* morse_of(char c)
+	{
+		switch (static_cast<char>(std::toupper(static_cast<unsigned char>(c))))
+		{
+		case 'A': return ".-";    case 'B': return "-...";  case 'C': return "-.-.";
+		case 'D': return "-..";   case 'E': return ".";     case 'F': return "..-.";
+		case 'G': return "--.";   case 'H': return "....";  case 'I': return "..";
+		case 'J': return ".---";  case 'K': return "-.-";   case 'L': return ".-..";
+		case 'M': return "--";    case 'N': return "-.";    case 'O': return "---";
+		case 'P': return ".--.";  case 'Q': return "--.-";  case 'R': return ".-.";
+		case 'S': return "...";   case 'T': return "-";     case 'U': return "..-";
+		case 'V': return "...-";  case 'W': return ".--";   case 'X': return "-..-";
+		case 'Y': return "-.--";  case 'Z': return "--..";
+		case '0': return "-----"; case '1': return ".----"; case '2': return "..---";
+		case '3': return "...--"; case '4': return "....-"; case '5': return ".....";
+		case '6': return "-...."; case '7': return "--..."; case '8': return "---..";
+		case '9': return "----.";
+		case '.': return ".-.-.-"; case ',': return "--..--"; case '?': return "..--..";
+		case '!': return "-.-.--"; case '\'': return ".----."; case '"': return ".-..-.";
+		default:  return nullptr;
+		}
+	}
+
+	char morse_to_char(const String& group)
+	{
+		for (char c = 'A'; c <= 'Z'; ++c)
+		{
+			if (group == morse_of(c))
+				return c;
+		}
+
+		for (char c = '0'; c <= '9'; ++c)
+		{
+			if (group == morse_of(c))
+				return c;
+		}
+
+		for (const char c : { '.', ',', '?', '!', '\'', '\"' })
+		{
+			if (group == morse_of(c))
+				return c;
+		}
+
+		return '\0';
+	}
+}
+
+sp::cppString sp::coding::toMorse(const cppString& text)
+{
+	String result;
+	bool first_letter_of_word = true;
+
+	for (const char c : text.s_str())
+	{
+		if (c == ' ' || c == '\t' || c == '\n')
+		{
+			if (!first_letter_of_word) // suppress leading/duplicate separators
+			{
+				result += " / ";
+				first_letter_of_word = true;
+			}
+			continue;
+		}
+
+		const char* code = morse_of(c);
+
+		if (code == nullptr)
+			throw sp::Invalid_Conversion("Character has no Morse equivalent in toMorse.");
+
+		if (!first_letter_of_word)
+			result += ' ';
+
+		result += code;
+		first_letter_of_word = false;
+	}
+
+	// Trim a trailing word separator.
+	if (result.size() >= 3 && result.compare(result.size() - 3, 3, " / ") == 0)
+		result.resize(result.size() - 3);
+
+	return cppString(std::move(result));
+}
+
+sp::cppString sp::coding::fromMorse(const cppString& text)
+{
+	String result;
+
+	std::istringstream stream{ text.s_str() };
+	String group;
+
+	while (stream >> group)
+	{
+		if (group == "/")
+		{
+			if (!result.empty() && result.back() != ' ')
+				result += ' ';
+
+			continue;
+		}
+
+		const char decoded = morse_to_char(group);
+
+		if (decoded == '\0')
+			throw sp::Invalid_Conversion("Unknown Morse group in fromMorse.");
+
+		result += decoded;
+	}
+
+	return cppString(std::move(result));
 }

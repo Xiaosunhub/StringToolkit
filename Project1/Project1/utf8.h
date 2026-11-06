@@ -21,36 +21,36 @@
 #ifndef __INC_UTF8_H__
 #define __INC_UTF8_H__
 
-#include "StringToolkit.h"
+#include "cppString.h"
 
 namespace sp
 {
 	namespace utf8
 	{
 		// Strict UTF-8 validation (rejects truncated, overlong, surrogate and > U+10FFFF sequences).
-		bool is_valid(const StringToolkit& s);
+		bool is_valid(const cppString& s);
 
 		// Number of code points (characters), not bytes.
-		std::size_t length(const StringToolkit& s);
+		std::size_t length(const cppString& s);
 
-		// Byte offset of the char_index-th character. Returns StringToolkit::npos when out of range.
-		std::size_t offset(const StringToolkit& s, std::size_t char_index);
+		// Byte offset of the char_index-th character. Returns cppString::npos when out of range.
+		std::size_t offset(const cppString& s, std::size_t char_index);
 
 		// Substring by character index. Throws Empty_String on empty input, Index_Out_Of_Range on bad range.
-		StringToolkit sub(const StringToolkit& s, std::size_t start);
-		StringToolkit sub(const StringToolkit& s, std::size_t start, std::size_t length);
+		cppString sub(const cppString& s, std::size_t start);
+		cppString sub(const cppString& s, std::size_t start, std::size_t length);
 
 		// Split into characters.
-		std::vector<StringToolkit> chars(const StringToolkit& s);
+		std::vector<cppString> chars(const cppString& s);
 
 		// Decode to code points. Throws Invalid_Conversion on malformed input.
-		std::vector<char32_t> codepoints(const StringToolkit& s);
+		std::vector<char32_t> codepoints(const cppString& s);
 
 		// Encode one code point. Throws Invalid_Argument on surrogate or out-of-range value.
-		StringToolkit from_codepoint(char32_t cp);
+		cppString from_codepoint(char32_t cp);
 
 		// Reverse by character (safe for multi-byte UTF-8).
-		StringToolkit reverse(const StringToolkit& s);
+		cppString reverse(const cppString& s);
 	}
 }
 

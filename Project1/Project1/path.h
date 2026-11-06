@@ -21,7 +21,7 @@
 #ifndef __INC_PATH_H__
 #define __INC_PATH_H__
 
-#include "StringToolkit.h"
+#include "cppString.h"
 
 namespace sp
 {
@@ -30,28 +30,28 @@ namespace sp
 	namespace path
 	{
 		// Join base and child. An absolute child replaces base entirely.
-		StringToolkit join(const StringToolkit& base, const StringToolkit& child);
+		cppString join(const cppString& base, const cppString& child);
 
 		// Collapse duplicate separators and resolve "." / ".." segments.
 		// Keeps a drive prefix ("C:"), a leading "/" or a UNC "//server" prefix.
 		// Returns "." for an empty path.
-		StringToolkit normalize(const StringToolkit& p);
+		cppString normalize(const cppString& p);
 
 		// Last component: "a/b/c.txt" -> "c.txt"; a trailing separator is ignored.
-		StringToolkit filename(const StringToolkit& p);
+		cppString filename(const cppString& p);
 
 		// Filename without its last extension: "a/b/c.tar.gz" -> "c.tar";
 		// a leading dot is not an extension (".gitignore" -> ".gitignore").
-		StringToolkit stem(const StringToolkit& p);
+		cppString stem(const cppString& p);
 
 		// Last extension including the dot, or "" when there is none.
-		StringToolkit extension(const StringToolkit& p);
+		cppString extension(const cppString& p);
 
 		// Directory part: "a/b/c.txt" -> "a/b"; "/a" -> "/"; "a" -> ".";
-		StringToolkit parent(const StringToolkit& p);
+		cppString parent(const cppString& p);
 
 		// True for "/x", "\\x", "C:/x", "C:x" and "//server/share".
-		bool is_absolute(const StringToolkit& p) noexcept;
+		bool is_absolute(const cppString& p) noexcept;
 	}
 }
 

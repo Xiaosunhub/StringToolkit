@@ -21,7 +21,7 @@
 #ifndef __INC_CHECKSUM_H__
 #define __INC_CHECKSUM_H__
 
-#include "StringToolkit.h"
+#include "cppString.h"
 #include <cstdint>
 
 namespace sp
@@ -31,16 +31,16 @@ namespace sp
 	namespace checksum
 	{
 		// CRC-32/ISO-HDLC (the zlib / PNG variant).
-		std::uint32_t crc32(const StringToolkit& data) noexcept;
-		StringToolkit crc32_hex(const StringToolkit& data);          // 8 lowercase hex digits
+		std::uint32_t crc32(const cppString& data) noexcept;
+		cppString crc32_hex(const cppString& data);          // 8 lowercase hex digits
 
 		// FNV-1a, 64-bit.
-		std::uint64_t fnv1a64(const StringToolkit& data) noexcept;
-		StringToolkit fnv1a64_hex(const StringToolkit& data);        // 16 lowercase hex digits
+		std::uint64_t fnv1a64(const cppString& data) noexcept;
+		cppString fnv1a64_hex(const cppString& data);        // 16 lowercase hex digits
 
 		// Adler-32 (the zlib rolling checksum).
-		std::uint32_t adler32(const StringToolkit& data) noexcept;
-		StringToolkit adler32_hex(const StringToolkit& data);        // 8 lowercase hex digits
+		std::uint32_t adler32(const cppString& data) noexcept;
+		cppString adler32_hex(const cppString& data);        // 8 lowercase hex digits
 	}
 }
 

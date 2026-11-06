@@ -162,13 +162,13 @@ namespace
 	}
 }
 
-bool sp::semver::is_valid(const StringToolkit& s) noexcept
+bool sp::semver::is_valid(const cppString& s) noexcept
 {
 	Version version{};
 	return parse(s.s_str(), version);
 }
 
-int sp::semver::compare(const StringToolkit& a, const StringToolkit& b)
+int sp::semver::compare(const cppString& a, const cppString& b)
 {
 	Version lhs{}, rhs{};
 

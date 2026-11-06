@@ -28,7 +28,7 @@ namespace
 	}
 }
 
-bool sp::path::is_absolute(const StringToolkit& p) noexcept
+bool sp::path::is_absolute(const cppString& p) noexcept
 {
 	const String& s = p.s_str();
 
@@ -41,7 +41,7 @@ bool sp::path::is_absolute(const StringToolkit& p) noexcept
 	return is_drive_prefix(s);
 }
 
-sp::StringToolkit sp::path::join(const StringToolkit& base, const StringToolkit& child)
+sp::cppString sp::path::join(const cppString& base, const cppString& child)
 {
 	if (child.empty())
 		return normalize(base);
@@ -49,7 +49,7 @@ sp::StringToolkit sp::path::join(const StringToolkit& base, const StringToolkit&
 	if (base.empty() || is_absolute(child))
 		return normalize(child);
 
-	StringToolkit result{ base };
+	cppString result{ base };
 
 	if (!result.endsWith('/') && !result.endsWith('\\'))
 		result += '/';
@@ -59,12 +59,12 @@ sp::StringToolkit sp::path::join(const StringToolkit& base, const StringToolkit&
 	return normalize(result);
 }
 
-sp::StringToolkit sp::path::normalize(const StringToolkit& p)
+sp::cppString sp::path::normalize(const cppString& p)
 {
 	String s = slashify(p.s_str());
 
 	if (s.empty())
-		return StringToolkit{ "." };
+		return cppString{ "." };
 
 	String prefix;      // "C:" for drives, "" otherwise
 	bool absolute = false;
@@ -132,18 +132,18 @@ sp::StringToolkit sp::path::normalize(const StringToolkit& p)
 	}
 
 	if (unc)
-		return StringToolkit{ "//" + body };
+		return cppString{ "//" + body };
 
 	if (absolute)
-		return StringToolkit{ prefix + "/" + body };
+		return cppString{ prefix + "/" + body };
 
 	if (body.empty())
-		return StringToolkit{ "." };
+		return cppString{ "." };
 
-	return StringToolkit{ prefix + body };
+	return cppString{ prefix + body };
 }
 
-sp::StringToolkit sp::path::filename(const StringToolkit& p)
+sp::cppString sp::path::filename(const cppString& p)
 {
 	String s = slashify(p.s_str());
 
@@ -152,34 +152,34 @@ sp::StringToolkit sp::path::filename(const StringToolkit& p)
 
 	const std::size_t sep = s.find_last_of('/');
 
-	return StringToolkit{ sep == String::npos ? s : s.substr(sep + 1) };
+	return cppString{ sep == String::npos ? s : s.substr(sep + 1) };
 }
 
-sp::StringToolkit sp::path::extension(const StringToolkit& p)
+sp::cppString sp::path::extension(const cppString& p)
 {
 	const String name = filename(p).s_str();
 	const std::size_t dot = name.find_last_of('.');
 
 	if (dot == String::npos || dot == 0)
-		return StringToolkit{};
+		return cppString{};
 
-	return StringToolkit{ name.substr(dot) };
+	return cppString{ name.substr(dot) };
 }
 
-sp::StringToolkit sp::path::stem(const StringToolkit& p)
+sp::cppString sp::path::stem(const cppString& p)
 {
 	const String name = filename(p).s_str();
 	const std::size_t dot = name.find_last_of('.');
 
 	if (dot == String::npos || dot == 0)
-		return StringToolkit{ name };
+		return cppString{ name };
 
-	return StringToolkit{ name.substr(0, dot) };
+	return cppString{ name.substr(0, dot) };
 }
 
-sp::StringToolkit sp::path::parent(const StringToolkit& p)
+sp::cppString sp::path::parent(const cppString& p)
 {
-	StringToolkit normalized{ normalize(p) };
+	cppString normalized{ normalize(p) };
 	const String& s = normalized.s_str();
 
 	// Already at a root: ".", "/", "//", "C:" or "C:/".
@@ -213,7 +213,7 @@ sp::StringToolkit sp::path::parent(const StringToolkit& p)
 	const std::size_t sep = body.find_last_of('/');
 
 	if (sep == String::npos)
-		return absolute ? StringToolkit{ prefix + "/" } : StringToolkit{ "." };
+		return absolute ? cppString{ prefix + "/" } : cppString{ "." };
 
-	return StringToolkit{ prefix + (absolute ? "/" : "") + body.substr(0, sep) };
+	return cppString{ prefix + (absolute ? "/" : "") + body.substr(0, sep) };
 }

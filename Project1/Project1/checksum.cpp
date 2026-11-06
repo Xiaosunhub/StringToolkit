@@ -36,7 +36,7 @@ namespace
 	}
 }
 
-std::uint32_t sp::checksum::crc32(const StringToolkit& data) noexcept
+std::uint32_t sp::checksum::crc32(const cppString& data) noexcept
 {
 	std::uint32_t crc = 0xFFFFFFFFu;
 
@@ -49,12 +49,12 @@ std::uint32_t sp::checksum::crc32(const StringToolkit& data) noexcept
 	return crc ^ 0xFFFFFFFFu;
 }
 
-sp::StringToolkit sp::checksum::crc32_hex(const StringToolkit& data)
+sp::cppString sp::checksum::crc32_hex(const cppString& data)
 {
-	return StringToolkit{ hex_string(crc32(data), 8) };
+	return cppString{ hex_string(crc32(data), 8) };
 }
 
-std::uint64_t sp::checksum::fnv1a64(const StringToolkit& data) noexcept
+std::uint64_t sp::checksum::fnv1a64(const cppString& data) noexcept
 {
 	std::uint64_t hash = 0xCBF29CE484222325ull;
 
@@ -67,12 +67,12 @@ std::uint64_t sp::checksum::fnv1a64(const StringToolkit& data) noexcept
 	return hash;
 }
 
-sp::StringToolkit sp::checksum::fnv1a64_hex(const StringToolkit& data)
+sp::cppString sp::checksum::fnv1a64_hex(const cppString& data)
 {
-	return StringToolkit{ hex_string(fnv1a64(data), 16) };
+	return cppString{ hex_string(fnv1a64(data), 16) };
 }
 
-std::uint32_t sp::checksum::adler32(const StringToolkit& data) noexcept
+std::uint32_t sp::checksum::adler32(const cppString& data) noexcept
 {
 	constexpr std::uint32_t MOD_ADLER = 65521u;
 
@@ -88,7 +88,7 @@ std::uint32_t sp::checksum::adler32(const StringToolkit& data) noexcept
 	return (b << 16) | a;
 }
 
-sp::StringToolkit sp::checksum::adler32_hex(const StringToolkit& data)
+sp::cppString sp::checksum::adler32_hex(const cppString& data)
 {
-	return StringToolkit{ hex_string(adler32(data), 8) };
+	return cppString{ hex_string(adler32(data), 8) };
 }

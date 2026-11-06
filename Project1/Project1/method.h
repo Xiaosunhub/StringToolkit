@@ -21,92 +21,92 @@
 #ifndef __INC_METHOD_H__
 #define __INC_METHOD_H__
 
-#include "StringToolkit.h"
+#include "cppString.h"
 
 namespace sp
 {
-	void reverse_string(StringToolkit& str);
+	void reverse_string(cppString& str);
 
-	void reverse_string_to(StringToolkit& str, StringToolkit& result);
-	void reverse_string_to(StringToolkit&& str, StringToolkit& result) noexcept;
+	void reverse_string_to(cppString& str, cppString& result);
+	void reverse_string_to(cppString&& str, cppString& result) noexcept;
 
-	void copy_to(StringToolkit& str, StringToolkit& result);
-	void copy_to(StringToolkit&& str, StringToolkit& result) noexcept;
+	void copy_to(cppString& str, cppString& result);
+	void copy_to(cppString&& str, cppString& result) noexcept;
 
-	void move_to(StringToolkit& str, StringToolkit& result);
-	void move_to(StringToolkit&& str, StringToolkit& result) noexcept;
+	void move_to(cppString& str, cppString& result);
+	void move_to(cppString&& str, cppString& result) noexcept;
 
-	void fill_with(StringToolkit& str, char ch);
+	void fill_with(cppString& str, char ch);
 
-	void fill(StringToolkit& str, char ch, std::size_t count);
+	void fill(cppString& str, char ch, std::size_t count);
 
-	void remove_prefix(StringToolkit& str, const StringToolkit& prefix);
-	void remove_suffix(StringToolkit& str, const StringToolkit& suffix);
+	void remove_prefix(cppString& str, const cppString& prefix);
+	void remove_suffix(cppString& str, const cppString& suffix);
 
 	// ---- text utilities ----
 
 	// Concatenate parts with a separator between them.
-	StringToolkit join(const std::vector<StringToolkit>& parts, const StringToolkit& separator);
-	StringToolkit join(const std::vector<StringToolkit>& parts, char separator);
+	cppString join(const std::vector<cppString>& parts, const cppString& separator);
+	cppString join(const std::vector<cppString>& parts, char separator);
 
 	// Split on '\n', "\r\n" or '\r'. A trailing newline does not produce an empty last line.
-	std::vector<StringToolkit> split_lines(const StringToolkit& str);
+	std::vector<cppString> split_lines(const cppString& str);
 
 	// Pad to width characters (UTF-8 aware). No-op when already wide enough.
-	void pad_left(StringToolkit& str, std::size_t width, char fill = ' ');
-	void pad_right(StringToolkit& str, std::size_t width, char fill = ' ');
+	void pad_left(cppString& str, std::size_t width, char fill = ' ');
+	void pad_right(cppString& str, std::size_t width, char fill = ' ');
 
 	// Uppercase the first ASCII letter and lowercase the rest.
-	void capitalize(StringToolkit& str);
+	void capitalize(cppString& str);
 
 	// Swap ASCII letter case.
-	void swap_case(StringToolkit& str);
+	void swap_case(cppString& str);
 
 	// Replace the first occurrence. Throws Invalid_Argument when from is empty.
-	void replace_first(StringToolkit& str, const StringToolkit& from, const StringToolkit& to);
+	void replace_first(cppString& str, const cppString& from, const cppString& to);
 
 	// ---- file I/O ----
 
 	// Read the whole file as bytes. Throws Invalid_Operation when the file cannot be opened.
-	StringToolkit read_file(const String& path);
-	std::vector<StringToolkit> read_lines(const String& path);
+	cppString read_file(const String& path);
+	std::vector<cppString> read_lines(const String& path);
 
 	// Write (or append) bytes to a file. Throws Invalid_Operation when the file cannot be opened.
-	void write_file(const String& path, const StringToolkit& data, bool append = false);
+	void write_file(const String& path, const cppString& data, bool append = false);
 
 	// ---- random ----
 
 	// Random string of the given length drawn from charset
 	// (default: A-Z a-z 0-9). Throws Invalid_Argument when charset is empty.
-	StringToolkit generate_random(std::size_t length, const StringToolkit& charset =
+	cppString generate_random(std::size_t length, const cppString& charset =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
 	// ---- case-insensitive conveniences (ASCII only) ----
 
-	bool icontains(const StringToolkit& str, const StringToolkit& sub);
-	bool istarts_with(const StringToolkit& str, const StringToolkit& prefix);
-	bool iends_with(const StringToolkit& str, const StringToolkit& suffix);
+	bool icontains(const cppString& str, const cppString& sub);
+	bool istarts_with(const cppString& str, const cppString& prefix);
+	bool iends_with(const cppString& str, const cppString& suffix);
 
 	// ---- splitting ----
 
 	// Split on every occurrence of ANY character in delimiters.
 	// Consecutive delimiters produce empty fields; a trailing delimiter produces no trailing empty field.
-	std::vector<StringToolkit> split_by_any(const StringToolkit& str, const StringToolkit& delimiters);
+	std::vector<cppString> split_by_any(const cppString& str, const cppString& delimiters);
 
 	// ---- pattern matching ----
 
 	// Shell-style wildcard match: '*' matches any run (including empty), '?' matches exactly one char.
 	// All other characters must match literally.
-	bool wildcard_match(const StringToolkit& str, const StringToolkit& pattern);
+	bool wildcard_match(const cppString& str, const cppString& pattern);
 
 	// ---- case style conversions ----
 
 	// "HelloWorld" / "hello-world" / "Hello World" -> "hello_world"
-	void to_snake_case(StringToolkit& str);
+	void to_snake_case(cppString& str);
 	// "HelloWorld" / "hello_world" / "Hello World" -> "hello-world"
-	void to_kebab_case(StringToolkit& str);
+	void to_kebab_case(cppString& str);
 	// "hello_world" / "hello-world" / "Hello World" -> "helloWorld"
-	void to_camel_case(StringToolkit& str);
+	void to_camel_case(cppString& str);
 
 	// ---- JSON ----
 
@@ -114,11 +114,11 @@ namespace sp
 	{
 		// Escape for embedding in a JSON string literal: " \ \b \f \n \r \t
 		// and control characters below 0x20 (as \u00XX). Other bytes pass through unchanged.
-		StringToolkit escape(const StringToolkit& text);
+		cppString escape(const cppString& text);
 
 		// Inverse of escape. Handles \uXXXX including UTF-16 surrogate pairs.
 		// Throws Invalid_Conversion on malformed escape sequences.
-		StringToolkit unescape(const StringToolkit& text);
+		cppString unescape(const cppString& text);
 	}
 
 	// ---- CSV ----
@@ -126,103 +126,133 @@ namespace sp
 	namespace csv
 	{
 		// Quote and escape a single field per RFC 4180 when it contains , " CR or LF.
-		StringToolkit escape(const StringToolkit& field);
+		cppString escape(const cppString& field);
 
 		// Parse one CSV line: quoted fields may contain commas and doubled quotes.
 		// Throws Invalid_Conversion on an unterminated quote.
-		std::vector<StringToolkit> split(const StringToolkit& line);
+		std::vector<cppString> split(const cppString& line);
 	}
 
 	// ---- statistics ----
 
 	// Number of whitespace-separated words. A run of CJK characters counts as one word
 	// because no space is required between them.
-	std::size_t word_count(const StringToolkit& str);
+	std::size_t word_count(const cppString& str);
 
 	// Levenshtein edit distance measured in characters (UTF-8 aware).
-	std::size_t levenshtein(const StringToolkit& a, const StringToolkit& b);
+	std::size_t levenshtein(const cppString& a, const cppString& b);
 
 	// 1.0 for identical strings, 0.0 for completely different ones.
 	// Empty vs empty is 1.0; empty vs non-empty is 0.0.
-	double similarity(const StringToolkit& a, const StringToolkit& b);
+	double similarity(const cppString& a, const cppString& b);
 
 	// Longest common prefix of all parts, cut on a UTF-8 boundary. Empty input -> "".
-	StringToolkit longest_common_prefix(const std::vector<StringToolkit>& parts);
+	cppString longest_common_prefix(const std::vector<cppString>& parts);
 
 	// ---- layout ----
 
 	// Greedy word wrap at width characters (UTF-8 aware). Existing newlines are kept;
 	// words longer than the width are left intact on their own line.
-	std::vector<StringToolkit> wrap(const StringToolkit& str, std::size_t width);
+	std::vector<cppString> wrap(const cppString& str, std::size_t width);
 
 	// Prefix every non-empty line with prefix.
-	void indent(StringToolkit& str, const StringToolkit& prefix);
+	void indent(cppString& str, const cppString& prefix);
 
 	// Group the integer part with sep: 1234567 -> "1,234,567". Keeps a leading '-'.
-	StringToolkit thousands_sep(long long value, char sep = ',');
+	cppString thousands_sep(long long value, char sep = ',');
 
 	// Human readable byte size: 512 -> "512 B", 1536 -> "1.5 KB", 1048576 -> "1 MB".
-	StringToolkit human_size(unsigned long long bytes);
+	cppString human_size(unsigned long long bytes);
 
 	// Replace every "{{key}}" in tmpl using vars. Unknown placeholders are left untouched.
-	StringToolkit render(const StringToolkit& tmpl, const std::map<StringToolkit, StringToolkit>& vars);
+	cppString render(const cppString& tmpl, const std::map<cppString, cppString>& vars);
 
 	// Split at the first (or last) occurrence of delimiter.
 	// When the delimiter is absent the whole string goes to first and second is empty.
-	std::pair<StringToolkit, StringToolkit> split_pair(const StringToolkit& str,
-		const StringToolkit& delimiter, bool first = true);
+	std::pair<cppString, cppString> split_pair(const cppString& str,
+		const cppString& delimiter, bool first = true);
 
 	// ---- convenience ----
 
 	// Cut the string to at most max_chars characters (UTF-8 aware), appending
 	// ellipsis when anything was removed. The ellipsis is included in max_chars.
-	void truncate(StringToolkit& str, std::size_t max_chars, const StringToolkit& ellipsis = "...");
+	void truncate(cppString& str, std::size_t max_chars, const cppString& ellipsis = "...");
 
 	// URL-friendly slug: lowercase, spaces/underscores -> '-', drop everything
 	// outside [a-z0-9-], collapse repeated '-', trim leading/trailing '-'.
-	void slug(StringToolkit& str);
+	void slug(cppString& str);
 
 	// Split into chunks of size characters (UTF-8 aware; the last chunk may be shorter).
 	// Throws Invalid_Argument when size is zero.
-	std::vector<StringToolkit> chunk(const StringToolkit& str, std::size_t size);
+	std::vector<cppString> chunk(const cppString& str, std::size_t size);
 
 	// Parse a boolean: "true/1/yes/on/y/t" and "false/0/no/off/n/f", case-insensitive.
 	// Throws Invalid_Conversion on anything else.
-	bool to_bool(const StringToolkit& str);
+	bool to_bool(const cppString& str);
 
 	// ---- string distance & diff helpers ----
 
 	// Positional difference count; strings must have equal UTF-8 character
 	// counts, otherwise Invalid_Argument is thrown.
-	std::size_t hamming(const StringToolkit& a, const StringToolkit& b);
+	std::size_t hamming(const cppString& a, const cppString& b);
 
 	// Longest shared leading/trailing part (never cuts a UTF-8 sequence).
-	StringToolkit common_prefix(const StringToolkit& a, const StringToolkit& b);
-	StringToolkit common_suffix(const StringToolkit& a, const StringToolkit& b);
+	cppString common_prefix(const cppString& a, const cppString& b);
+	cppString common_suffix(const cppString& a, const cppString& b);
 
 	// ---- formatting ----
 
 	// 90061 -> "1d 1h 1m 1s". Zero becomes "0s".
-	StringToolkit human_duration(unsigned long long seconds);
+	cppString human_duration(unsigned long long seconds);
 
 	// Roman numerals for 1..3999 (throws Invalid_Argument outside that range).
 	// from_roman accepts uppercase and lowercase, throws Invalid_Conversion
 	// on malformed input such as "IIII" or "VX".
-	StringToolkit to_roman(int value);
-	int from_roman(const StringToolkit& text);
+	cppString to_roman(int value);
+	int from_roman(const cppString& text);
 
 	// ---- HTML ----
 
 	namespace html
 	{
 		// Escape & < > " ' as &amp; &lt; &gt; &quot; &#39;.
-		StringToolkit escape(const StringToolkit& text);
+		cppString escape(const cppString& text);
 
 		// Decode named entities (amp lt gt quot apos nbsp) and numeric
 		// entities (&#65; / &#x41;) to UTF-8. Throws Invalid_Conversion on
 		// malformed or out-of-range entities.
-		StringToolkit unescape(const StringToolkit& text);
+		cppString unescape(const cppString& text);
 	}
+
+	// ---- more text tools ----
+
+	// Capitalize the first letter of every word, lowercase the rest.
+	void title_case(cppString& str);
+
+	// Pad both sides so the result is width UTF-8 characters wide;
+	// the extra character (when odd) goes to the right.
+	cppString center(const cppString& str, std::size_t width, char fill = ' ');
+
+	// Replace tabs with spaces, honoring column positions.
+	void expand_tabs(cppString& str, std::size_t tab_size = 8);
+
+	// Reverse the order of whitespace-separated words ("one two" -> "two one").
+	void reverse_words(cppString& str);
+
+	// UTF-8 character n-grams; throws Invalid_Argument when n is zero.
+	std::vector<cppString> ngrams(const cppString& str, std::size_t n);
+
+	// True when the string reads the same forwards and backwards (UTF-8 aware,
+	// case-sensitive). Empty strings count as palindromes.
+	bool is_palindrome(const cppString& str) noexcept;
+
+	// American Soundex phonetic code (letter + 3 digits, e.g. "Robert" -> "R163").
+	// Throws Invalid_Argument when the string has no ASCII letters.
+	cppString soundex(const cppString& str);
+
+	// Random RFC 4122 version-4 UUID, e.g. "550e8400-e29b-41d4-a716-446655440000"
+	// (always passes validate::is_uuid).
+	cppString uuid_v4();
 }
 
 #endif
