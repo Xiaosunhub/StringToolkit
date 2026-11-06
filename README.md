@@ -117,7 +117,7 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (390+ assertions) from a VS developer prompt:
+To build and run the test suite (438 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
@@ -143,7 +143,7 @@ Project1/Project1/
 ├── json.h / .cpp        # JSON Value, parser, serializer
 ├── table.h / .cpp       # ASCII table rendering (CJK-aware)
 ├── argparse.h / .cpp    # command-line argument parser
-└── testCppString.cpp    # 390+ assertion test suite
+└── testCppString.cpp    # 438 assertion test suite
 ```
 
 ## License
