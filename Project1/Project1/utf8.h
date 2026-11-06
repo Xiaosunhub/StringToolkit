@@ -51,6 +51,11 @@ namespace sp
 
 		// Reverse by character (safe for multi-byte UTF-8).
 		cppString reverse(const cppString& s);
+
+		// Terminal display width in columns: East Asian wide/fullwidth
+		// characters count as 2, combining marks and control characters
+		// as 0, everything else as 1.
+		std::size_t display_width(const cppString& s);
 	}
 }
 

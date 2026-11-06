@@ -107,6 +107,8 @@ namespace sp
 	void to_kebab_case(cppString& str);
 	// "hello_world" / "hello-world" / "Hello World" -> "helloWorld"
 	void to_camel_case(cppString& str);
+	// "hello_world" / "hello-world" / "hello world" -> "HelloWorld"
+	void to_pascal_case(cppString& str);
 
 	// ---- JSON ----
 
@@ -253,6 +255,29 @@ namespace sp
 	// Random RFC 4122 version-4 UUID, e.g. "550e8400-e29b-41d4-a716-446655440000"
 	// (always passes validate::is_uuid).
 	cppString uuid_v4();
+
+	// ---- more convenience (3.2) ----
+
+	// Remove the longest run of leading whitespace shared by every non-empty
+	// line. Useful for embedded multi-line literals.
+	void dedent(cppString& str);
+
+	// Collapse runs of the same character into one. With an empty chars set
+	// every repeated character is collapsed ("aaab  bb" -> "ab b");
+	// otherwise only characters listed in chars are collapsed.
+	void squeeze(cppString& str, const cppString& chars = "");
+
+	// Number of non-overlapping occurrences of needle.
+	// Throws Invalid_Argument when needle is empty.
+	std::size_t count(const cppString& str, const cppString& needle);
+
+	// True when both strings contain the same character multiset.
+	// Byte-level comparison: valid UTF-8 inputs compare per character.
+	bool is_anagram(const cppString& a, const cppString& b, bool ignore_case = false);
+
+	// Sorensen-Dice bigram similarity, 0.0..1.0 (UTF-8 aware).
+	// Two strings shorter than two characters score 1.0 when equal, else 0.0.
+	double dice_coefficient(const cppString& a, const cppString& b);
 }
 
 #endif

@@ -245,3 +245,48 @@ sp::cppString sp::utf8::reverse(const cppString& s)
 
 	return cppString(out);
 }
+
+namespace
+{
+	bool is_wide(char32_t cp) noexcept
+	{
+		return (cp >= 0x1100 && cp <= 0x115F)      // Hangul Jamo
+			|| (cp >= 0x2E80 && cp <= 0x303E)      // CJK Radicals, Kangxi, Ideographic Description
+			|| (cp >= 0x3041 && cp <= 0x33FF)      // Hiragana, Katakana, CJK Symbols
+			|| (cp >= 0x3400 && cp <= 0x4DBF)      // CJK Ext A
+			|| (cp >= 0x4E00 && cp <= 0x9FFF)      // CJK Unified Ideographs
+			|| (cp >= 0xA000 && cp <= 0xA4CF)      // Yi
+			|| (cp >= 0xAC00 && cp <= 0xD7A3)      // Hangul Syllables
+			|| (cp >= 0xF900 && cp <= 0xFAFF)      // CJK Compatibility Ideographs
+			|| (cp >= 0xFE30 && cp <= 0xFE4F)      // CJK Compatibility Forms
+			|| (cp >= 0xFF00 && cp <= 0xFF60)      // Fullwidth Forms
+			|| (cp >= 0xFFE0 && cp <= 0xFFE6)      // Fullwidth signs
+			|| (cp >= 0x1F300 && cp <= 0x1F64F)    // Emoji
+			|| (cp >= 0x20000 && cp <= 0x3FFFD);   // CJK Ext B+
+	}
+
+	bool is_zero_width(char32_t cp) noexcept
+	{
+		return cp < 0x20                           // C0 control characters
+			|| cp == 0x7F                          // DEL
+			|| (cp >= 0x0300 && cp <= 0x036F)      // combining diacritical marks
+			|| (cp >= 0x200B && cp <= 0x200F)      // zero-width space / joiners
+			|| (cp >= 0xFE00 && cp <= 0xFE0F)      // variation selectors
+			|| cp == 0xFEFF;                       // BOM / zero-width no-break space
+	}
+}
+
+std::size_t sp::utf8::display_width(const cppString& s)
+{
+	std::size_t width = 0;
+
+	for (const char32_t cp : codepoints(s))
+	{
+		if (is_zero_width(cp))
+			continue;
+
+		width += is_wide(cp) ? 2 : 1;
+	}
+
+	return width;
+}

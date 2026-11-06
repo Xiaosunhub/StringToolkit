@@ -34,6 +34,13 @@ namespace sp
 		// Precedence per semver.org; build metadata is ignored.
 		// Returns < 0, 0 or > 0. Throws Invalid_Format when either side is not valid semver.
 		int compare(const cppString& a, const cppString& b);
+
+		// Bump one component and reset the lower ones; any prerelease or build
+		// suffix is dropped ("1.2.3-rc.1+b5" -> bump_minor -> "1.3.0").
+		// Throws Invalid_Format when the input is not valid semver.
+		cppString bump_major(const cppString& s);
+		cppString bump_minor(const cppString& s);
+		cppString bump_patch(const cppString& s);
 	}
 }
 

@@ -239,3 +239,125 @@ bool sp::validate::is_url(const cppString& s) noexcept
 
 	return true;
 }
+
+bool sp::validate::is_mac_address(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	if (src.size() != 17)
+		return false;
+
+	const char sep = src[2];
+
+	if (sep != ':' && sep != '-')
+		return false;
+
+	for (std::size_t i = 0; i < src.size(); ++i)
+	{
+		if (i % 3 == 2)
+		{
+			if (src[i] != sep)
+				return false;
+		}
+		else if (!is_hex_digit(src[i]))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool sp::validate::is_hex_color(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	if (src.empty() || src[0] != '#')
+		return false;
+
+	const std::size_t digits = src.size() - 1;
+
+	if (digits != 3 && digits != 4 && digits != 6 && digits != 8)
+		return false;
+
+	for (std::size_t i = 1; i < src.size(); ++i)
+	{
+		if (!is_hex_digit(src[i]))
+			return false;
+	}
+
+	return true;
+}
+
+bool sp::validate::is_luhn(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	int sum = 0;
+	int digits = 0;
+	bool double_digit = false;
+
+	// Walk right to left, skipping spaces and dashes.
+	for (std::size_t i = src.size(); i-- > 0;)
+	{
+		const char c = src[i];
+
+		if (c == ' ' || c == '-')
+			continue;
+
+		if (c < '0' || c > '9')
+			return false;
+
+		int d = c - '0';
+
+		if (double_digit)
+		{
+			d *= 2;
+
+			if (d > 9)
+				d -= 9;
+		}
+
+		sum += d;
+		++digits;
+		double_digit = !double_digit;
+	}
+
+	return digits >= 2 && sum % 10 == 0;
+}
+
+bool sp::validate::is_ascii(const cppString& s) noexcept
+{
+	for (const char c : s.s_str())
+	{
+		if (static_cast<unsigned char>(c) >= 0x80)
+			return false;
+	}
+
+	return true;
+}
+
+bool sp::validate::is_strong_password(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	if (src.size() < 8)
+		return false;
+
+	bool lower = false, upper = false, digit = false, symbol = false;
+
+	for (const char c : src)
+	{
+		const unsigned char uc = static_cast<unsigned char>(c);
+
+		if (uc >= 0x80)
+			return false;
+
+		if (c >= 'a' && c <= 'z')      lower = true;
+		else if (c >= 'A' && c <= 'Z') upper = true;
+		else if (c >= '0' && c <= '9') digit = true;
+		else                           symbol = true;
+	}
+
+	return lower && upper && digit && symbol;
+}

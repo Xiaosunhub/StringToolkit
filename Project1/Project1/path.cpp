@@ -221,3 +221,133 @@ sp::cppString sp::path::parent(const cppString& p)
 
 	return cppString{ prefix + (absolute ? "/" : "") + body.substr(0, sep) };
 }
+
+namespace
+{
+	// Split a normalized path into its root ("C:", "/", "//server" style
+	// prefixes stay attached conceptually) and its plain segments.
+	std::vector<String> segments_of(const String& normalized)
+	{
+		String body = normalized;
+
+		if (body.size() >= 2 && body[0] == '/' && body[1] == '/')
+		{
+			// UNC: keep "//server" as a single leading segment.
+			const std::size_t next = body.find('/', 2);
+
+			if (next == String::npos)
+				return { body };
+
+			std::vector<String> segs{ body.substr(0, next) };
+			body = body.substr(next + 1);
+
+			std::size_t pos = 0;
+
+			while (pos <= body.size())
+			{
+				const std::size_t end = body.find('/', pos);
+				String part = body.substr(pos,
+					end == String::npos ? String::npos : end - pos);
+
+				if (!part.empty())
+					segs.push_back(std::move(part));
+
+				if (end == String::npos)
+					break;
+
+				pos = end + 1;
+			}
+
+			return segs;
+		}
+
+		std::vector<String> segs;
+		std::size_t pos = 0;
+
+		if (body.size() >= 2
+			&& ((body[0] >= 'A' && body[0] <= 'Z') || (body[0] >= 'a' && body[0] <= 'z'))
+			&& body[1] == ':')
+		{
+			segs.push_back(body.substr(0, 2)); // drive prefix as its own segment
+			pos = 2;
+		}
+
+		if (pos < body.size() && body[pos] == '/')
+		{
+			if (segs.empty())
+				segs.push_back("/");
+			else
+				segs[0] += '/';
+			++pos;
+		}
+
+		while (pos <= body.size())
+		{
+			const std::size_t end = body.find('/', pos);
+			String part = body.substr(pos,
+				end == String::npos ? String::npos : end - pos);
+
+			if (!part.empty())
+				segs.push_back(std::move(part));
+
+			if (end == String::npos)
+				break;
+
+			pos = end + 1;
+		}
+
+		return segs;
+	}
+}
+
+sp::cppString sp::path::relative(const cppString& from, const cppString& to)
+{
+	const String f = normalize(from).s_str();
+	const String t = normalize(to).s_str();
+
+	const bool f_abs = is_absolute(cppString{ f });
+	const bool t_abs = is_absolute(cppString{ t });
+
+	// Different absoluteness never mixes.
+	if (f_abs != t_abs)
+		return cppString{ t };
+
+	const auto a = segments_of(f);
+	const auto b = segments_of(t);
+
+	// The root segment (drive, "/", "//server") must match.
+	if (!a.empty() && !b.empty())
+	{
+		const bool a_root = a[0].size() >= 1
+			&& (a[0] == "/" || a[0].back() == ':' || a[0].back() == '/'
+				|| (a[0].size() >= 2 && a[0][0] == '/' && a[0][1] == '/'));
+
+		if (a_root && a[0] != b[0])
+			return cppString{ t };
+	}
+
+	std::size_t common = 0;
+
+	while (common < a.size() && common < b.size() && a[common] == b[common])
+		++common;
+
+	String result;
+
+	for (std::size_t i = common; i < a.size(); ++i)
+	{
+		if (!result.empty())
+			result += '/';
+
+		result += "..";
+	}
+
+	for (std::size_t i = common; i < b.size(); ++i)
+	{
+		if (!result.empty())
+			result += '/';
+
+		result += b[i];
+	}
+
+	return cppString{ result.empty() ? "." : result };
+}

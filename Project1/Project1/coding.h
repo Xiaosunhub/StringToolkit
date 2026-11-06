@@ -65,6 +65,12 @@ namespace sp
 		cppString toBase(unsigned long long value, unsigned base);
 		long long fromBase(const cppString& text, unsigned base);
 
+		// Base32 (RFC 4648 section 6): alphabet A-Z 2-7 with '=' padding.
+		// fromBase32 accepts lowercase input and missing padding;
+		// throws Invalid_Conversion on characters outside the alphabet.
+		cppString toBase32(const cppString& data);
+		cppString fromBase32(const cppString& text);
+
 		// ---- classical ciphers ----
 
 		// ROT13: self-inverse letter substitution.

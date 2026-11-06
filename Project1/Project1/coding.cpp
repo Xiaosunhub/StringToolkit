@@ -1,5 +1,6 @@
 #include "coding.h"
 #include <cctype>
+#include <cstdint>
 #include <sstream>
 
 namespace
@@ -425,6 +426,90 @@ long long sp::coding::fromBase(const cppString& text, unsigned base)
 		return static_cast<long long>(0ULL - value);
 
 	return static_cast<long long>(value);
+}
+
+namespace
+{
+	constexpr char BASE32_ALPHABET[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+	int base32_value(unsigned char c)
+	{
+		if (c >= 'A' && c <= 'Z') return c - 'A';
+		if (c >= 'a' && c <= 'z') return c - 'a';
+		if (c >= '2' && c <= '7') return c - '2' + 26;
+		return -1;
+	}
+}
+
+sp::cppString sp::coding::toBase32(const cppString& data)
+{
+	const String& src = data.s_str();
+
+	String result;
+	result.reserve((src.size() + 4) / 5 * 8);
+
+	std::uint32_t acc = 0;
+	int bits = 0;
+
+	for (const char ch : src)
+	{
+		acc = (acc << 8) | static_cast<unsigned char>(ch);
+		bits += 8;
+
+		while (bits >= 5)
+		{
+			bits -= 5;
+			result += BASE32_ALPHABET[(acc >> bits) & 0x1Fu];
+		}
+	}
+
+	if (bits > 0)
+		result += BASE32_ALPHABET[(acc << (5 - bits)) & 0x1Fu];
+
+	while (result.size() % 8 != 0)
+		result += '=';
+
+	return cppString(std::move(result));
+}
+
+sp::cppString sp::coding::fromBase32(const cppString& text)
+{
+	const String& src = text.s_str();
+
+	String result;
+	result.reserve(src.size() * 5 / 8);
+
+	std::uint32_t acc = 0;
+	int bits = 0;
+	bool padded = false;
+
+	for (const char ch : src)
+	{
+		if (ch == '=')
+		{
+			padded = true;
+			continue;
+		}
+
+		if (padded)
+			throw sp::Invalid_Conversion("Data after '=' padding in fromBase32.");
+
+		const int value = base32_value(static_cast<unsigned char>(ch));
+
+		if (value < 0)
+			throw sp::Invalid_Conversion("Invalid base32 character in fromBase32.");
+
+		acc = (acc << 5) | static_cast<std::uint32_t>(value);
+		bits += 5;
+
+		if (bits >= 8)
+		{
+			bits -= 8;
+			result += static_cast<char>((acc >> bits) & 0xFFu);
+		}
+	}
+
+	return cppString(std::move(result));
 }
 
 namespace

@@ -201,3 +201,39 @@ int sp::semver::compare(const cppString& a, const cppString& b)
 
 	return 0;
 }
+
+namespace
+{
+	sp::cppString bump(const sp::cppString& s, int component)
+	{
+		Version v{};
+
+		if (!parse(s.s_str(), v))
+			throw sp::Invalid_Format("Not valid semver in bump: " + s.s_str());
+
+		switch (component)
+		{
+		case 0: ++v.major; v.minor = 0; v.patch = 0; break;
+		case 1: ++v.minor; v.patch = 0; break;
+		default: ++v.patch; break;
+		}
+
+		return sp::cppString(std::to_string(v.major) + "."
+			+ std::to_string(v.minor) + "." + std::to_string(v.patch));
+	}
+}
+
+sp::cppString sp::semver::bump_major(const cppString& s)
+{
+	return bump(s, 0);
+}
+
+sp::cppString sp::semver::bump_minor(const cppString& s)
+{
+	return bump(s, 1);
+}
+
+sp::cppString sp::semver::bump_patch(const cppString& s)
+{
+	return bump(s, 2);
+}

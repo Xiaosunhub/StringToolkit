@@ -443,6 +443,25 @@ void sp::to_camel_case(cppString& str)
 	str = cppString(std::move(result));
 }
 
+void sp::to_pascal_case(cppString& str)
+{
+	const auto words = split_words(str.s_str());
+
+	String result;
+
+	for (const auto& raw : words)
+	{
+		String word = to_lower_ascii(raw);
+
+		if (!word.empty())
+			word[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(word[0])));
+
+		result += word;
+	}
+
+	str = cppString(std::move(result));
+}
+
 // ---- JSON ----
 
 sp::cppString sp::json::escape(const cppString& text)
@@ -1619,4 +1638,154 @@ sp::cppString sp::uuid_v4()
 	}
 
 	return cppString(std::move(result));
+}
+
+// ---- more convenience (3.2) ----
+
+void sp::dedent(cppString& str)
+{
+	const auto lines = split_lines(str);
+
+	// Longest shared run of leading spaces/tabs across non-empty lines.
+	std::size_t margin = String::npos;
+
+	for (const auto& line : lines)
+	{
+		const String& s = line.s_str();
+
+		if (s.empty())
+			continue;
+
+		std::size_t lead = 0;
+
+		while (lead < s.size() && (s[lead] == ' ' || s[lead] == '\t'))
+			++lead;
+
+		if (lead == s.size())
+			continue; // whitespace-only lines do not shrink the margin
+
+		margin = (margin == String::npos) ? lead : (std::min)(margin, lead);
+	}
+
+	if (margin == String::npos || margin == 0)
+		return; // nothing to strip (or nothing but whitespace)
+
+	String result;
+
+	for (std::size_t i = 0; i < lines.size(); ++i)
+	{
+		String s = lines[i].s_str();
+		std::size_t stripped = 0;
+
+		while (stripped < margin && stripped < s.size()
+			&& (s[stripped] == ' ' || s[stripped] == '\t'))
+		{
+			++stripped;
+		}
+
+		result += s.substr(stripped);
+
+		if (i + 1 < lines.size())
+			result += '\n';
+	}
+
+	str = cppString(std::move(result));
+}
+
+void sp::squeeze(cppString& str, const cppString& chars)
+{
+	const String& src = str.s_str();
+
+	if (src.empty())
+		return;
+
+	String result;
+	result.reserve(src.size());
+
+	char prev = src[0];
+	result += prev;
+
+	for (std::size_t i = 1; i < src.size(); ++i)
+	{
+		const char c = src[i];
+
+		if (c == prev && (chars.empty() || chars.contains(c)))
+			continue;
+
+		result += c;
+		prev = c;
+	}
+
+	str = cppString(std::move(result));
+}
+
+std::size_t sp::count(const cppString& str, const cppString& needle)
+{
+	const String& src = str.s_str();
+	const String& sub = needle.s_str();
+
+	if (sub.empty())
+		throw sp::Invalid_Argument("Cannot count an empty needle in count.");
+
+	std::size_t total = 0;
+	std::size_t pos = 0;
+
+	while ((pos = src.find(sub, pos)) != String::npos)
+	{
+		++total;
+		pos += sub.size();
+	}
+
+	return total;
+}
+
+bool sp::is_anagram(const cppString& a, const cppString& b, bool ignore_case)
+{
+	String sa = a.s_str();
+	String sb = b.s_str();
+
+	if (ignore_case)
+	{
+		sa = a.copyLower().s_str();
+		sb = b.copyLower().s_str();
+	}
+
+	if (sa.size() != sb.size())
+		return false;
+
+	std::sort(sa.begin(), sa.end());
+	std::sort(sb.begin(), sb.end());
+
+	return sa == sb;
+}
+
+double sp::dice_coefficient(const cppString& a, const cppString& b)
+{
+	const auto ca = utf8::chars(a);
+	const auto cb = utf8::chars(b);
+
+	if (ca.size() < 2 || cb.size() < 2)
+		return a == b ? 1.0 : 0.0;
+
+	// Multiset intersection of character bigrams.
+	std::map<String, std::size_t> bigrams;
+
+	for (std::size_t i = 0; i + 1 < ca.size(); ++i)
+		++bigrams[ca[i].s_str() + ca[i + 1].s_str()];
+
+	std::size_t overlap = 0;
+
+	for (std::size_t i = 0; i + 1 < cb.size(); ++i)
+	{
+		auto it = bigrams.find(cb[i].s_str() + cb[i + 1].s_str());
+
+		if (it != bigrams.end() && it->second > 0)
+		{
+			--it->second;
+			++overlap;
+		}
+	}
+
+	return 2.0 * static_cast<double>(overlap)
+		/ static_cast<double>(ca.size() - 1 + (cb.size() - 1));
 }

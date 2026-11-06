@@ -41,6 +41,11 @@ namespace sp
 		// Adler-32 (the zlib rolling checksum).
 		std::uint32_t adler32(const cppString& data) noexcept;
 		cppString adler32_hex(const cppString& data);        // 8 lowercase hex digits
+
+		// MD5 (RFC 1321). Legacy digest: fine for cache keys and
+		// fingerprints, NOT collision-resistant - never use for security.
+		cppString md5(const cppString& data);                // 16 raw digest bytes
+		cppString md5_hex(const cppString& data);            // 32 lowercase hex digits
 	}
 }
 

@@ -44,6 +44,25 @@ namespace sp
 		// "scheme://rest" with a valid scheme (letter, then letters/digits/+/-/.)
 		// and no whitespace in the remainder.
 		bool is_url(const cppString& s) noexcept;
+
+		// Six pairs of hex digits joined by ':' or '-' (the separator must be
+		// consistent): "01:23:45:67:89:ab" or "01-23-45-67-89-AB".
+		bool is_mac_address(const cppString& s) noexcept;
+
+		// CSS-style hex color: '#' followed by 3, 4, 6 or 8 hex digits
+		// (#RGB, #RGBA, #RRGGBB, #RRGGBBAA).
+		bool is_hex_color(const cppString& s) noexcept;
+
+		// Digits passing the Luhn checksum (bank cards, IMEI). At least two
+		// digits; spaces and dashes are ignored.
+		bool is_luhn(const cppString& s) noexcept;
+
+		// True when every byte is below 0x80 (empty string included).
+		bool is_ascii(const cppString& s) noexcept;
+
+		// At least 8 characters containing a lowercase letter, an uppercase
+		// letter, a digit and a non-alphanumeric symbol (all ASCII).
+		bool is_strong_password(const cppString& s) noexcept;
 	}
 }
 

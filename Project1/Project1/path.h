@@ -52,6 +52,11 @@ namespace sp
 
 		// True for "/x", "\\x", "C:/x", "C:x" and "//server/share".
 		bool is_absolute(const cppString& p) noexcept;
+
+		// Path of `to` relative to the directory `from`. Both sides are
+		// normalized first. Returns `to` unchanged when the roots differ
+		// (different drives, absolute vs relative). Equal paths give ".".
+		cppString relative(const cppString& from, const cppString& to);
 	}
 }
 

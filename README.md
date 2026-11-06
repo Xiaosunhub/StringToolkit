@@ -25,20 +25,21 @@ encoding, validation, paths, checksums, versioning, and everyday text work.
 
 Strict validation (rejects truncation, overlongs, surrogates, > U+10FFFF),
 codepoint-length, char-indexed substring, per-character split, codepoint
-encode/decode, char-aware reverse.
+encode/decode, char-aware reverse, terminal `display_width` (CJK = 2 columns).
 
 ### `coding.h` — `sp::coding`
 
-Base64 / Base64URL (RFC 4648 §5, unpadded), hex, binary, octal, URL
+Base64 / Base32 / Base64URL (RFC 4648), hex, binary, octal, URL
 percent-encoding, integer radix 2–36, ROT13 / Caesar cipher, Morse code.
 
 ### `method.h` — `sp::`
 
 Everyday text tools: `join`, `split_lines`, `split_by_any`, `pad_left/right`,
-`center`, `capitalize`, `title_case`, `swap_case`, `snake/kebab/camel case`,
-`wildcard_match`, `truncate`, `slug`, `chunk`, `ngrams`, `is_palindrome`,
-`soundex`, `levenshtein`, `hamming`, `similarity`, `common_prefix/suffix`,
-`word_count`, `wrap`, `indent`, `expand_tabs`, `reverse_words`,
+`center`, `capitalize`, `title_case`, `swap_case`, `snake/kebab/camel/pascal
+case`, `wildcard_match`, `truncate`, `slug`, `chunk`, `ngrams`, `is_palindrome`,
+`soundex`, `levenshtein`, `hamming`, `similarity`, `dice_coefficient`,
+`is_anagram`, `common_prefix/suffix`, `word_count`, `wrap`, `indent`, `dedent`,
+`squeeze`, `count`, `expand_tabs`, `reverse_words`,
 `thousands_sep`, `human_size`, `human_duration`, `to_roman` / `from_roman`,
 `render` (`{{key}}` templates), `generate_random`, `uuid_v4`, `to_bool`,
 case-insensitive `icontains` / `istarts_with` / `iends_with`,
@@ -49,21 +50,24 @@ plus simple file I/O (`read_file` / `read_lines` / `write_file`).
 
 Pure-string path handling (no filesystem access, normalized to `/`):
 `join`, `normalize` (drive letters, UNC, `.`, `..`), `filename`, `stem`,
-`extension`, `parent`, `is_absolute`.
+`extension`, `parent`, `is_absolute`, `relative`.
 
 ### `checksum.h` — `sp::checksum`
 
-CRC-32 (compile-time table), FNV-1a 64, Adler-32 — value and hex forms.
+CRC-32 (compile-time table), FNV-1a 64, Adler-32, MD5 (legacy, cache keys
+only) — value/bytes and hex forms.
 
 ### `validate.h` — `sp::validate`
 
 `is_ipv4`, `is_ipv6` (with `::` compression and embedded IPv4 tails),
-`is_email`, `is_uuid`, `is_url`.
+`is_email`, `is_uuid`, `is_url`, `is_mac_address`, `is_hex_color`,
+`is_luhn`, `is_ascii`, `is_strong_password`.
 
 ### `semver.h` — `sp::semver`
 
 Strict semver 2.0.0 validation and precedence comparison
-(numeric identifiers, prerelease rules, build metadata ignored).
+(numeric identifiers, prerelease rules, build metadata ignored),
+plus `bump_major` / `bump_minor` / `bump_patch`.
 
 ## Quick start
 
@@ -94,7 +98,7 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (294 assertions) from a VS developer prompt:
+To build and run the test suite (340+ assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
@@ -109,14 +113,14 @@ Or open `Project1.slnx` in Visual Studio and press F5.
 ```
 Project1/Project1/
 ├── cppString.h / .cpp   # core class
-├── utf8.h / .cpp        # UTF-8 validation & manipulation
-├── coding.h / .cpp      # base64/hex/binary/octal/url, radix, ciphers, morse
+├── utf8.h / .cpp        # UTF-8 validation & manipulation, display width
+├── coding.h / .cpp      # base64/base32/hex/binary/octal/url, radix, ciphers, morse
 ├── method.h / .cpp      # text utilities, file I/O, json/csv/html helpers
 ├── path.h / .cpp        # path manipulation
-├── checksum.h / .cpp    # CRC-32, FNV-1a, Adler-32
-├── validate.h / .cpp    # IP/email/UUID/URL validation
+├── checksum.h / .cpp    # CRC-32, FNV-1a, Adler-32, MD5
+├── validate.h / .cpp    # IP/email/UUID/URL/MAC/color/Luhn validation
 ├── semver.h / .cpp      # semantic versioning
-└── testCppString.cpp    # 294-assertion test suite
+└── testCppString.cpp    # 340+ assertion test suite
 ```
 
 ## License
