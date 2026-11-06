@@ -33,6 +33,11 @@
 #ifndef __INC_CPPSTRING_H__
 #define __INC_CPPSTRING_H__
 
+#define CPPSTRING_VERSION_MAJOR 3
+#define CPPSTRING_VERSION_MINOR 1
+#define CPPSTRING_VERSION_PATCH 2
+#define CPPSTRING_VERSION "3.1.2"
+
 #ifndef CPPSTRING_EXPORT
 #define CPPSTRING_EXPORT __declspec(dllexport)
 #else

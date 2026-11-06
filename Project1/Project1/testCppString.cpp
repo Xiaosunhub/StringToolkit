@@ -320,6 +320,9 @@ int main()
 		check(sp::path::normalize("/../a") == "/a", "path::normalize (.. at root)");
 		check(sp::path::normalize("//server/share/x/..") == "//server/share", "path::normalize (UNC)");
 		check(sp::path::normalize("") == ".", "path::normalize (empty)");
+		check(sp::path::normalize("C:") == "C:", "path::normalize (bare drive)");
+		check(sp::path::normalize("C:.") == "C:", "path::normalize (drive + dot)");
+		check(sp::path::parent("C:") == "C:", "path::parent (bare drive)");
 
 		check(sp::path::filename("a/b/c.txt") == "c.txt", "path::filename");
 		check(sp::path::filename("a/b/") == "b", "path::filename (trailing sep)");
@@ -657,6 +660,12 @@ int main()
 		check(id1.s_str()[14] == '4', "uuid_v4 (version nibble)");
 		check(String{ "89abAB" }.find(id1.s_str()[19]) != String::npos,
 			"uuid_v4 (variant nibble)");
+	}
+
+	{
+		// version macros must be valid semver (checked with our own module)
+		check(sp::semver::is_valid(CPPSTRING_VERSION), "CPPSTRING_VERSION is valid semver");
+		check(sp::semver::compare(CPPSTRING_VERSION, "3.1.1") > 0, "CPPSTRING_VERSION > 3.1.1");
 	}
 
 	if (g_failed == 0)

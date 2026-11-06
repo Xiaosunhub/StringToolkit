@@ -138,7 +138,11 @@ sp::cppString sp::path::normalize(const cppString& p)
 		return cppString{ prefix + "/" + body };
 
 	if (body.empty())
-		return cppString{ "." };
+	{
+		// A bare drive prefix ("C:") is a valid drive-relative path;
+		// only a truly empty path normalizes to ".".
+		return cppString{ prefix.empty() ? "." : prefix };
+	}
 
 	return cppString{ prefix + body };
 }
