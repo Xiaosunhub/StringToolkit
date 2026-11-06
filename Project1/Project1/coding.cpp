@@ -758,3 +758,113 @@ sp::cppString sp::coding::fromMorse(const cppString& text)
 
 	return cppString(std::move(result));
 }
+
+namespace
+{
+	constexpr char BASE58_ALPHABET[] =
+		"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+	int base58_value(unsigned char c)
+	{
+		if (c >= '1' && c <= '9') return c - '1';
+		if (c >= 'A' && c <= 'H') return c - 'A' + 9;
+		if (c >= 'J' && c <= 'N') return c - 'J' + 17;
+		if (c >= 'P' && c <= 'Z') return c - 'P' + 22;
+		if (c >= 'a' && c <= 'k') return c - 'a' + 33;
+		if (c >= 'm' && c <= 'z') return c - 'm' + 44;
+		return -1;
+	}
+}
+
+sp::cppString sp::coding::toBase58(const cppString& data)
+{
+	String work = data.s_str(); // mutable copy: divided in place below
+
+	// Count leading zero bytes; each becomes one '1'.
+	std::size_t zeros = 0;
+
+	while (zeros < work.size() && work[zeros] == '\0')
+		++zeros;
+
+	// Big-endian base-256 -> base-58 via repeated division.
+	String digits; // little-endian base-58 digits
+	std::size_t start = zeros;
+
+	while (start < work.size())
+	{
+		unsigned int carry = 0;
+
+		for (std::size_t i = start; i < work.size(); ++i)
+		{
+			const unsigned int value = carry * 256u
+				+ static_cast<unsigned char>(work[i]);
+			work[i] = static_cast<char>(value / 58u);
+			carry = value % 58u;
+		}
+
+		digits += BASE58_ALPHABET[carry];
+
+		while (start < work.size() && work[start] == '\0')
+			++start;
+	}
+
+	String result(zeros, '1');
+
+	for (std::size_t i = digits.size(); i-- > 0;)
+		result += digits[i];
+
+	return cppString(std::move(result));
+}
+
+sp::cppString sp::coding::fromBase58(const cppString& text)
+{
+	const String& src = text.s_str();
+
+	std::size_t ones = 0;
+
+	while (ones < src.size() && src[ones] == '1')
+		++ones;
+
+	// Map to base-58 digit values (most significant first) up front;
+	// the division loop below keeps working in digit space.
+	String digits;
+	digits.reserve(src.size() - ones);
+
+	for (std::size_t i = ones; i < src.size(); ++i)
+	{
+		const int d = base58_value(static_cast<unsigned char>(src[i]));
+
+		if (d < 0)
+			throw sp::Invalid_Conversion("Invalid base58 character in fromBase58.");
+
+		digits += static_cast<char>(d);
+	}
+
+	String bytes; // little-endian base-256
+	std::size_t start = 0;
+
+	while (start < digits.size())
+	{
+		unsigned int carry = 0;
+
+		for (std::size_t i = start; i < digits.size(); ++i)
+		{
+			const unsigned int value = carry * 58u
+				+ static_cast<unsigned char>(digits[i]);
+			digits[i] = static_cast<char>(value / 256u);
+			carry = value % 256u;
+		}
+
+		bytes += static_cast<char>(carry);
+
+		while (start < digits.size() && digits[start] == '\0')
+			++start;
+	}
+
+	String result(ones, '\0');
+
+	for (std::size_t i = bytes.size(); i-- > 0;)
+		result += bytes[i];
+
+	return cppString(std::move(result));
+}

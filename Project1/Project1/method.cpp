@@ -1789,3 +1789,65 @@ double sp::dice_coefficient(const cppString& a, const cppString& b)
 	return 2.0 * static_cast<double>(overlap)
 		/ static_cast<double>(ca.size() - 1 + (cb.size() - 1));
 }
+
+// ---- diff ----
+
+std::vector<sp::DiffLine> sp::diff_lines(const cppString& old_text, const cppString& new_text)
+{
+	const auto old_lines = split_lines(old_text);
+	const auto new_lines = split_lines(new_text);
+
+	const std::size_t n = old_lines.size();
+	const std::size_t m = new_lines.size();
+
+	// LCS length table, (n+1) x (m+1).
+	std::vector<std::size_t> lcs((n + 1) * (m + 1), 0);
+
+	auto at = [&](std::size_t i, std::size_t j) -> std::size_t&
+	{
+		return lcs[i * (m + 1) + j];
+	};
+
+	for (std::size_t i = n; i-- > 0;)
+	{
+		for (std::size_t j = m; j-- > 0;)
+		{
+			if (old_lines[i] == new_lines[j])
+				at(i, j) = at(i + 1, j + 1) + 1;
+			else
+				at(i, j) = (std::max)(at(i + 1, j), at(i, j + 1));
+		}
+	}
+
+	// Walk the table: deletions first, then insertions, matches as context.
+	std::vector<DiffLine> result;
+	std::size_t i = 0, j = 0;
+
+	while (i < n && j < m)
+	{
+		if (old_lines[i] == new_lines[j])
+		{
+			result.push_back({ ' ', old_lines[i] });
+			++i;
+			++j;
+		}
+		else if (at(i + 1, j) >= at(i, j + 1))
+		{
+			result.push_back({ '-', old_lines[i] });
+			++i;
+		}
+		else
+		{
+			result.push_back({ '+', new_lines[j] });
+			++j;
+		}
+	}
+
+	while (i < n)
+		result.push_back({ '-', old_lines[i++] });
+
+	while (j < m)
+		result.push_back({ '+', new_lines[j++] });
+
+	return result;
+}

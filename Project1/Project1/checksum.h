@@ -46,6 +46,11 @@ namespace sp
 		// fingerprints, NOT collision-resistant - never use for security.
 		cppString md5(const cppString& data);                // 16 raw digest bytes
 		cppString md5_hex(const cppString& data);            // 32 lowercase hex digits
+
+		// SHA-256 (FIPS 180-4). Collision-resistant digest suitable for
+		// integrity checks and content addressing.
+		cppString sha256(const cppString& data);             // 32 raw digest bytes
+		cppString sha256_hex(const cppString& data);         // 64 lowercase hex digits
 	}
 }
 

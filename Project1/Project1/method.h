@@ -278,6 +278,19 @@ namespace sp
 	// Sorensen-Dice bigram similarity, 0.0..1.0 (UTF-8 aware).
 	// Two strings shorter than two characters score 1.0 when equal, else 0.0.
 	double dice_coefficient(const cppString& a, const cppString& b);
+
+	// ---- diff ----
+
+	// One entry of a line diff: ' ' context, '-' only in old, '+' only in new.
+	struct DiffLine
+	{
+		char tag;
+		cppString text;
+	};
+
+	// LCS-based line diff. The result replays old_text into new_text:
+	// drop every '-' line, keep every ' ' line, insert every '+' line.
+	std::vector<DiffLine> diff_lines(const cppString& old_text, const cppString& new_text);
 }
 
 #endif

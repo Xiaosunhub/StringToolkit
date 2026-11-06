@@ -29,8 +29,27 @@ encode/decode, char-aware reverse, terminal `display_width` (CJK = 2 columns).
 
 ### `coding.h` — `sp::coding`
 
-Base64 / Base32 / Base64URL (RFC 4648), hex, binary, octal, URL
-percent-encoding, integer radix 2–36, ROT13 / Caesar cipher, Morse code.
+Base64 / Base32 / Base58 (Bitcoin alphabet) / Base64URL (RFC 4648), hex,
+binary, octal, URL percent-encoding, integer radix 2–36, ROT13 / Caesar
+cipher, Morse code.
+
+### `json.h` — `sp::json`
+
+Full JSON (RFC 8259): a `Value` variant type (null / bool / number / string /
+array / object, insertion-ordered objects), a strict recursive-descent
+`parse` with byte-position error messages, and `dump` in compact or
+pretty-printed form. Round-trip safe: `parse(x.dump()) == x`.
+
+### `table.h` — `sp::table`
+
+ASCII table rendering with per-column alignment. Column widths use
+`utf8::display_width`, so CJK text stays aligned in a terminal.
+
+### `argparse.h` — `sp::ArgParser`
+
+Small command-line parser: `--long` / `-s` options, `--key=value`, combined
+short flags (`-abc`), `--` terminator, positionals and an auto-generated
+`help()` text.
 
 ### `method.h` — `sp::`
 
@@ -39,7 +58,7 @@ Everyday text tools: `join`, `split_lines`, `split_by_any`, `pad_left/right`,
 case`, `wildcard_match`, `truncate`, `slug`, `chunk`, `ngrams`, `is_palindrome`,
 `soundex`, `levenshtein`, `hamming`, `similarity`, `dice_coefficient`,
 `is_anagram`, `common_prefix/suffix`, `word_count`, `wrap`, `indent`, `dedent`,
-`squeeze`, `count`, `expand_tabs`, `reverse_words`,
+`squeeze`, `count`, `expand_tabs`, `reverse_words`, `diff_lines` (LCS),
 `thousands_sep`, `human_size`, `human_duration`, `to_roman` / `from_roman`,
 `render` (`{{key}}` templates), `generate_random`, `uuid_v4`, `to_bool`,
 case-insensitive `icontains` / `istarts_with` / `iends_with`,
@@ -55,7 +74,7 @@ Pure-string path handling (no filesystem access, normalized to `/`):
 ### `checksum.h` — `sp::checksum`
 
 CRC-32 (compile-time table), FNV-1a 64, Adler-32, MD5 (legacy, cache keys
-only) — value/bytes and hex forms.
+only), SHA-256 — value/bytes and hex forms.
 
 ### `validate.h` — `sp::validate`
 
@@ -98,11 +117,12 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (340+ assertions) from a VS developer prompt:
+To build and run the test suite (390+ assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
-   path.cpp checksum.cpp validate.cpp semver.cpp testCppString.cpp
+   path.cpp checksum.cpp validate.cpp semver.cpp json.cpp table.cpp ^
+   argparse.cpp testCppString.cpp
 testCppString.exe
 ```
 
@@ -114,13 +134,16 @@ Or open `Project1.slnx` in Visual Studio and press F5.
 Project1/Project1/
 ├── cppString.h / .cpp   # core class
 ├── utf8.h / .cpp        # UTF-8 validation & manipulation, display width
-├── coding.h / .cpp      # base64/base32/hex/binary/octal/url, radix, ciphers, morse
-├── method.h / .cpp      # text utilities, file I/O, json/csv/html helpers
+├── coding.h / .cpp      # base64/base32/base58/hex/binary/octal/url, radix, ciphers, morse
+├── method.h / .cpp      # text utilities, file I/O, json/csv/html helpers, diff
 ├── path.h / .cpp        # path manipulation
-├── checksum.h / .cpp    # CRC-32, FNV-1a, Adler-32, MD5
+├── checksum.h / .cpp    # CRC-32, FNV-1a, Adler-32, MD5, SHA-256
 ├── validate.h / .cpp    # IP/email/UUID/URL/MAC/color/Luhn validation
 ├── semver.h / .cpp      # semantic versioning
-└── testCppString.cpp    # 340+ assertion test suite
+├── json.h / .cpp        # JSON Value, parser, serializer
+├── table.h / .cpp       # ASCII table rendering (CJK-aware)
+├── argparse.h / .cpp    # command-line argument parser
+└── testCppString.cpp    # 390+ assertion test suite
 ```
 
 ## License

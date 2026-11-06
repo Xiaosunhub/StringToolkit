@@ -71,6 +71,12 @@ namespace sp
 		cppString toBase32(const cppString& data);
 		cppString fromBase32(const cppString& text);
 
+		// Base58 (Bitcoin alphabet, no 0/O/I/l): each leading zero byte
+		// becomes one '1'. fromBase58 throws Invalid_Conversion on
+		// characters outside the alphabet.
+		cppString toBase58(const cppString& data);
+		cppString fromBase58(const cppString& text);
+
 		// ---- classical ciphers ----
 
 		// ROT13: self-inverse letter substitution.
