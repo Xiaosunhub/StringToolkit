@@ -12,5 +12,14 @@ x64/
 *.user
 *.suo
 
+# Local-only: IDE project, tests, release script (only headers + impl are pushed)
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+cpp.hint
+testCppString.cpp
+release.bat
+build/
+
 # WorkBuddy AI session data
 .workbuddy/
