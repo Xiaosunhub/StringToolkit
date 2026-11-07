@@ -28,6 +28,20 @@ using sp::cppString;
 using sp::json::Type;
 using sp::json::Value;
 
+namespace
+{
+	// static_cast<double>(LLONG_MAX) rounds UP to 2^63, so an inclusive
+	// "value <= double(LLONG_MAX)" check lets 2^63 through and the subsequent
+	// cast to long long wraps to LLONG_MIN. The upper bound must be exclusive.
+	constexpr double kIntLo = -9223372036854775808.0;  // -2^63, exact
+	constexpr double kIntHi = 9223372036854775808.0;   //  2^63, exclusive
+
+	bool fits_long_long(double value) noexcept
+	{
+		return value >= kIntLo && value < kIntHi && std::trunc(value) == value;
+	}
+}
+
 Value::Value() = default;
 
 Value::Value(std::nullptr_t) {}
@@ -49,13 +63,7 @@ Value::Value(const object_t& value)
 
 bool Value::is_integer() const noexcept
 {
-	if (m_type != Type::Number)
-		return false;
-
-	constexpr double LO = static_cast<double>(std::numeric_limits<long long>::min());
-	constexpr double HI = static_cast<double>(std::numeric_limits<long long>::max());
-
-	return m_number >= LO && m_number <= HI && std::trunc(m_number) == m_number;
+	return m_type == Type::Number && fits_long_long(m_number);
 }
 
 bool Value::as_bool() const
@@ -209,10 +217,7 @@ namespace
 	cppString number_to_string(double value)
 	{
 		// Integers print without a decimal point.
-		constexpr double LO = static_cast<double>(std::numeric_limits<long long>::min());
-		constexpr double HI = static_cast<double>(std::numeric_limits<long long>::max());
-
-		if (value >= LO && value <= HI && std::trunc(value) == value)
+		if (fits_long_long(value))
 			return cppString{ std::to_string(static_cast<long long>(value)) };
 
 		char buf[64];
@@ -658,6 +663,11 @@ namespace
 	bool parse_index(const String& token, std::size_t& index)
 	{
 		if (token.empty())
+			return false;
+
+		// RFC 6901: array-index = "0" / (1-9 *DIGIT); leading zeros are
+		// forbidden and must not silently resolve to a different element.
+		if (token.size() > 1 && token.front() == '0')
 			return false;
 
 		for (const char c : token)

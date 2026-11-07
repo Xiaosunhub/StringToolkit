@@ -80,7 +80,10 @@ namespace
 	String remove_dot_segments(const String& path)
 	{
 		const bool absolute = !path.empty() && path.front() == '/';
-		const bool trailing = path.size() > 1 && path.back() == '/';
+		// RFC 3986 5.2.4 replaces a trailing "/." or "/.." with "/", so the
+		// result ends in a slash even though the input does not.
+		const bool trailing = (path.size() > 1 && path.back() == '/')
+			|| path.ends_with("/.") || path.ends_with("/..");
 
 		std::vector<String> stack;
 		std::size_t pos = 0;
@@ -131,8 +134,13 @@ namespace
 		return result;
 	}
 
-	String merge_paths(const String& base, const String& reference)
+	String merge_paths(const String& base, const String& reference, bool base_has_authority)
 	{
+		// RFC 3986 5.2.3: with an authority and an empty base path the merged
+		// path must start with "/", otherwise host and path run together.
+		if (base_has_authority && base.empty())
+			return String{ "/" } + reference;
+
 		if (!base.empty() && base.find('/') == String::npos)
 			return reference;
 
@@ -150,12 +158,14 @@ sp::url::Url::Url(const cppString& text)
 	if (const std::size_t hash = rest.find('#'); hash != String::npos)
 	{
 		m_fragment = cppString{ rest.substr(hash + 1) };
+		m_has_fragment = true;
 		rest.resize(hash);
 	}
 
 	if (const std::size_t question = rest.find('?'); question != String::npos)
 	{
 		m_query = cppString{ rest.substr(question + 1) };
+		m_has_query = true;
 		rest.resize(question);
 	}
 
@@ -233,6 +243,7 @@ void sp::url::Url::set_query_params(
 	}
 
 	m_query = cppString(std::move(out));
+	m_has_query = true;
 }
 
 sp::cppString sp::url::Url::query_param(const cppString& key, const cppString& fallback) const
@@ -308,13 +319,13 @@ sp::cppString sp::url::Url::str() const
 
 	out += m_path.s_str();
 
-	if (!m_query.empty())
+	if (m_has_query)
 	{
 		out += '?';
 		out += m_query.s_str();
 	}
 
-	if (!m_fragment.empty())
+	if (m_has_fragment)
 	{
 		out += '#';
 		out += m_fragment.s_str();
@@ -337,6 +348,7 @@ sp::url::Url sp::url::Url::resolve(const cppString& reference) const
 
 	result.m_scheme = m_scheme;
 	result.m_fragment = ref.m_fragment;
+	result.m_has_fragment = ref.m_has_fragment;
 
 	if (ref.has_authority())
 	{
@@ -345,6 +357,7 @@ sp::url::Url sp::url::Url::resolve(const cppString& reference) const
 		result.m_port = ref.m_port;
 		result.m_path = cppString{ remove_dot_segments(ref.m_path.s_str()) };
 		result.m_query = ref.m_query;
+		result.m_has_query = ref.m_has_query;
 		return result;
 	}
 
@@ -355,16 +368,29 @@ sp::url::Url sp::url::Url::resolve(const cppString& reference) const
 	if (ref.m_path.empty())
 	{
 		result.m_path = cppString{ remove_dot_segments(m_path.s_str()) };
-		result.m_query = ref.m_query.empty() ? m_query : ref.m_query;
+
+		// RFC 3986 5.2.2: only an *undefined* query inherits the base query.
+		// "?" defines an empty query and must clear it.
+		if (ref.m_has_query)
+		{
+			result.m_query = ref.m_query;
+			result.m_has_query = true;
+		}
+		else
+		{
+			result.m_query = m_query;
+			result.m_has_query = m_has_query;
+		}
 	}
 	else
 	{
 		String merged = ref.m_path.s_str().front() == '/'
 			? ref.m_path.s_str()
-			: merge_paths(m_path.s_str(), ref.m_path.s_str());
+			: merge_paths(m_path.s_str(), ref.m_path.s_str(), has_authority());
 
 		result.m_path = cppString{ remove_dot_segments(merged) };
 		result.m_query = ref.m_query;
+		result.m_has_query = ref.m_has_query;
 	}
 
 	return result;

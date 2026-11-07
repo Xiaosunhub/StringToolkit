@@ -51,8 +51,10 @@ namespace sp
 			void set_host(const cppString& value)     { m_host = value; }
 			void set_port(const cppString& value)     { m_port = value; }
 			void set_path(const cppString& value)     { m_path = value; }
-			void set_query(const cppString& value)    { m_query = value; }
-			void set_fragment(const cppString& value) { m_fragment = value; }
+			// Setting either component marks it as explicitly defined, so an
+			// empty query/fragment still serializes as "?" / "#".
+			void set_query(const cppString& value)    { m_query = value; m_has_query = true; }
+			void set_fragment(const cppString& value) { m_fragment = value; m_has_fragment = true; }
 
 			[[nodiscard]] bool has_authority() const noexcept
 			{
@@ -84,6 +86,10 @@ namespace sp
 			cppString m_path{};
 			cppString m_query{};
 			cppString m_fragment{};
+			// RFC 3986 distinguishes an undefined component from an empty one:
+			// "?" defines an empty query and "#" an empty fragment.
+			bool m_has_query = false;
+			bool m_has_fragment = false;
 		};
 
 		[[nodiscard]] Url parse(const cppString& text);

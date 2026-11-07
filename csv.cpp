@@ -204,6 +204,9 @@ sp::csv::Document sp::csv::parse(const cppString& text, char delimiter, bool has
 	Document::Row current;
 	String field;
 	bool in_quotes = false;
+	// A quoted field may legally be empty (`""`); field/current stay empty in
+	// that case, so remember that a record was actually started.
+	bool saw_quoted = false;
 
 	auto end_field = [&]()
 	{
@@ -216,6 +219,7 @@ sp::csv::Document sp::csv::parse(const cppString& text, char delimiter, bool has
 		end_field();
 		records.push_back(std::move(current));
 		current.clear();
+		saw_quoted = false;
 	};
 
 	for (std::size_t i = 0; i < src.size(); ++i)
@@ -253,6 +257,7 @@ sp::csv::Document sp::csv::parse(const cppString& text, char delimiter, bool has
 			if (c == '"' && field.empty())
 			{
 				in_quotes = true;
+				saw_quoted = true;
 			}
 			else if (c == delimiter)
 			{
@@ -276,7 +281,7 @@ sp::csv::Document sp::csv::parse(const cppString& text, char delimiter, bool has
 		throw sp::Invalid_Conversion("Unterminated quoted field in csv::parse.");
 
 	// A trailing line break already closed the last record.
-	if (!field.empty() || !current.empty())
+	if (!field.empty() || !current.empty() || saw_quoted)
 		end_record();
 
 	Document doc;

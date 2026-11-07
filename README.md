@@ -11,8 +11,8 @@ binary parsing, file system operations, and everyday text work.
 校验、路径、哈希、语义化版本、格式化、终端输出、二进制解析、
 文件系统操作、文本处理等一系列独立模块。
 
-当前版本：`5.3.1`（缺陷修复版本）。
-Current release: **5.3.1** — bug-fix update.
+当前版本：`5.3.2`（解析与边界缺陷修复）。
+Current release: **5.3.2** — parser and boundary bug fixes.
 
 ## Features
 
@@ -248,7 +248,7 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (875 assertions) from a VS developer prompt:
+To build and run the test suite (898 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
@@ -296,7 +296,7 @@ release script mirrors the library sources into the root before each push.
 └── .gitignore
 ```
 
-The 875-assertion test suite (`testCppString.cpp`) is used by the local build
+The 898-assertion test suite (`testCppString.cpp`) is used by the local build
 gate but is intentionally kept out of the published repository.
 
 ## License
