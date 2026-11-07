@@ -600,3 +600,255 @@ Value sp::json::parse(const cppString& text)
 {
 	return Parser(text.s_str()).run();
 }
+
+// ---- JSON Pointer (RFC 6901) and Merge Patch (RFC 7386) ----
+
+namespace
+{
+	std::vector<String> pointer_tokens(const String& path)
+	{
+		std::vector<String> tokens;
+
+		if (path.empty())
+			return tokens;
+
+		if (path.front() != '/')
+			throw sp::Invalid_Conversion("JSON Pointer must be empty or start with '/'.");
+
+		std::size_t pos = 0;
+
+		while (pos < path.size())
+		{
+			++pos; // skip the leading '/'
+			const std::size_t end = path.find('/', pos);
+			const String raw = path.substr(pos,
+				end == String::npos ? String::npos : end - pos);
+
+			String token;
+
+			for (std::size_t i = 0; i < raw.size(); ++i)
+			{
+				if (raw[i] == '~' && i + 1 < raw.size() && raw[i + 1] == '1')
+				{
+					token += '/';
+					++i;
+				}
+				else if (raw[i] == '~' && i + 1 < raw.size() && raw[i + 1] == '0')
+				{
+					token += '~';
+					++i;
+				}
+				else
+				{
+					token += raw[i];
+				}
+			}
+
+			tokens.push_back(std::move(token));
+
+			if (end == String::npos)
+				break;
+
+			pos = end;
+		}
+
+		return tokens;
+	}
+
+	bool parse_index(const String& token, std::size_t& index)
+	{
+		if (token.empty())
+			return false;
+
+		for (const char c : token)
+		{
+			if (c < '0' || c > '9')
+				return false;
+		}
+
+		std::size_t value = 0;
+		const auto result = std::from_chars(token.data(), token.data() + token.size(), value);
+
+		if (result.ec != std::errc{} || result.ptr != token.data() + token.size())
+			return false;
+
+		index = value;
+		return true;
+	}
+}
+
+const sp::json::Value& sp::json::pointer(const Value& root, const cppString& path)
+{
+	const auto tokens = pointer_tokens(path.s_str());
+	const Value* current = &root;
+
+	for (const String& token : tokens)
+	{
+		if (current->is_array())
+		{
+			std::size_t index = 0;
+
+			if (!parse_index(token, index))
+				throw sp::Invalid_Conversion("Non-numeric JSON Pointer array token: " + token);
+
+			if (index >= current->as_array().size())
+				throw sp::Index_Out_Of_Range("JSON Pointer array index out of range.");
+
+			current = &(*current)[index];
+		}
+		else if (current->is_object())
+		{
+			const Value* found = nullptr;
+
+			for (const auto& entry : current->as_object())
+			{
+				if (entry.first == cppString{ token })
+				{
+					found = &entry.second;
+					break;
+				}
+			}
+
+			if (!found)
+				throw sp::Invalid_Operation("JSON Pointer key not found: " + token);
+
+			current = found;
+		}
+		else
+		{
+			throw sp::Invalid_Operation("JSON Pointer traverses a scalar value.");
+		}
+	}
+
+	return *current;
+}
+
+void sp::json::set_pointer(Value& root, const cppString& path, Value value)
+{
+	const auto tokens = pointer_tokens(path.s_str());
+
+	if (tokens.empty())
+	{
+		root = std::move(value);
+		return;
+	}
+
+	Value* current = &root;
+
+	for (std::size_t i = 0; i < tokens.size(); ++i)
+	{
+		const String& token = tokens[i];
+		const bool last = (i + 1 == tokens.size());
+		std::size_t dummy = 0;
+
+		const bool treat_as_array = current->is_array()
+			|| (current->is_null() && (token == "-" || parse_index(token, dummy)));
+
+		if (treat_as_array)
+		{
+			auto& array = current->array_items();
+
+			if (token == "-")
+			{
+				if (last)
+				{
+					array.push_back(std::move(value));
+					return;
+				}
+
+				array.emplace_back();
+				current = &array.back();
+				continue;
+			}
+
+			std::size_t index = 0;
+
+			if (!parse_index(token, index))
+				throw sp::Invalid_Conversion("Non-numeric JSON Pointer array token: " + token);
+
+			while (array.size() <= index)
+				array.emplace_back();
+
+			if (last)
+			{
+				array[index] = std::move(value);
+				return;
+			}
+
+			current = &array[index];
+		}
+		else
+		{
+			auto& object = current->object_items();
+			std::size_t found = object.size();
+
+			for (std::size_t k = 0; k < object.size(); ++k)
+			{
+				if (object[k].first == cppString{ token })
+				{
+					found = k;
+					break;
+				}
+			}
+
+			if (found == object.size())
+			{
+				object.emplace_back(cppString{ token }, Value{});
+				found = object.size() - 1;
+			}
+
+			if (last)
+			{
+				object[found].second = std::move(value);
+				return;
+			}
+
+			current = &object[found].second;
+		}
+	}
+}
+
+sp::json::Value sp::json::merge(Value target, const Value& patch)
+{
+	if (!patch.is_object())
+		return patch;
+
+	if (!target.is_object())
+	{
+		Value empty_object;
+		empty_object.object_items();
+		target = std::move(empty_object);
+	}
+
+	auto& object = target.object_items();
+
+	for (const auto& entry : patch.as_object())
+	{
+		std::size_t found = object.size();
+
+		for (std::size_t k = 0; k < object.size(); ++k)
+		{
+			if (object[k].first == entry.first)
+			{
+				found = k;
+				break;
+			}
+		}
+
+		if (entry.second.is_null())
+		{
+			if (found != object.size())
+				object.erase(object.begin() + static_cast<std::ptrdiff_t>(found));
+		}
+		else if (found != object.size())
+		{
+			object[found].second = merge(std::move(object[found].second), entry.second);
+		}
+		else
+		{
+			object.emplace_back(entry.first, merge(Value{}, entry.second));
+		}
+	}
+
+	return target;
+}

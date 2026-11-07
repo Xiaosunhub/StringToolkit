@@ -339,3 +339,49 @@ sp::cppString sp::checksum::sha256_hex(const cppString& data)
 
 	return cppString(std::move(out));
 }
+
+// ---- HMAC-SHA-256 (RFC 2104) ----
+
+sp::cppString sp::checksum::hmac_sha256(const cppString& key, const cppString& message)
+{
+	String k = key.s_str();
+
+	if (k.size() > 64)
+		k = sha256(cppString{ k }).s_str();
+
+	k.resize(64, '\0');
+
+	String inner;
+	String outer;
+	inner.reserve(64 + message.s_str().size());
+	outer.reserve(64 + 32);
+
+	for (const char ch : k)
+	{
+		const unsigned char byte = static_cast<unsigned char>(ch);
+		inner += static_cast<char>(byte ^ 0x36u);
+		outer += static_cast<char>(byte ^ 0x5Cu);
+	}
+
+	inner += message.s_str();
+	outer += sha256(cppString{ inner }).s_str();
+
+	return sha256(cppString{ outer });
+}
+
+sp::cppString sp::checksum::hmac_sha256_hex(const cppString& key, const cppString& message)
+{
+	const String digest = hmac_sha256(key, message).s_str();
+
+	String out;
+	out.reserve(64);
+
+	for (const char ch : digest)
+	{
+		const unsigned char byte = static_cast<unsigned char>(ch);
+		out += "0123456789abcdef"[byte >> 4];
+		out += "0123456789abcdef"[byte & 0xF];
+	}
+
+	return cppString(std::move(out));
+}

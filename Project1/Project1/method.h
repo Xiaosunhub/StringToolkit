@@ -291,6 +291,13 @@ namespace sp
 	// LCS-based line diff. The result replays old_text into new_text:
 	// drop every '-' line, keep every ' ' line, insert every '+' line.
 	std::vector<DiffLine> diff_lines(const cppString& old_text, const cppString& new_text);
+
+	// Standard unified diff text built from diff_lines(). Returns an empty
+	// string when the two texts are identical. context is the number of
+	// unchanged lines kept around each change block.
+	cppString unified_diff(const cppString& old_text, const cppString& new_text,
+		std::size_t context = 3,
+		const cppString& old_name = "a", const cppString& new_name = "b");
 }
 
 #endif

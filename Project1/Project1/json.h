@@ -116,6 +116,22 @@ namespace sp
 		// Parse a JSON document. Throws Invalid_Conversion with the byte
 		// position on malformed input; trailing garbage is rejected.
 		Value parse(const cppString& text);
+
+		// RFC 6901 JSON Pointer. Tokens are '/'-separated with ~1 -> '/'
+		// and ~0 -> '~'. The empty path denotes the whole document.
+		// Throws Invalid_Operation / Index_Out_Of_Range when a token cannot
+		// be resolved. Array tokens must be decimal indices.
+		const Value& pointer(const Value& root, const cppString& path);
+
+		// Set (or create) the value at a JSON Pointer path. Missing object
+		// keys are appended; array indices are grown with Null values, and
+		// "-" appends to an array. Throws Invalid_Conversion on a bad path.
+		void set_pointer(Value& root, const cppString& path, Value value);
+
+		// RFC 7386 JSON Merge Patch applied to a copy of target.
+		// A Null patch member removes the key; objects merge recursively;
+		// any other patch value replaces the target value.
+		Value merge(Value target, const Value& patch);
 	}
 }
 

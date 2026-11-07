@@ -1851,3 +1851,87 @@ std::vector<sp::DiffLine> sp::diff_lines(const cppString& old_text, const cppStr
 
 	return result;
 }
+
+// ---- unified diff (5.0) ----
+
+sp::cppString sp::unified_diff(const cppString& old_text, const cppString& new_text,
+	std::size_t context, const cppString& old_name, const cppString& new_name)
+{
+	const auto diff = diff_lines(old_text, new_text);
+	const std::size_t total = diff.size();
+
+	std::vector<bool> keep(total, false);
+	bool changed = false;
+
+	for (std::size_t i = 0; i < total; ++i)
+	{
+		if (diff[i].tag == ' ')
+			continue;
+
+		changed = true;
+		const std::size_t low = (i > context) ? i - context : 0;
+		const std::size_t high = (std::min)(total - 1, i + context);
+
+		for (std::size_t k = low; k <= high; ++k)
+			keep[k] = true;
+	}
+
+	if (!changed)
+		return cppString{};
+
+	String out;
+	out += "--- ";
+	out += old_name.s_str();
+	out += '\n';
+	out += "+++ ";
+	out += new_name.s_str();
+	out += '\n';
+
+	std::size_t start = 0;
+
+	while (start < total)
+	{
+		while (start < total && !keep[start])
+			++start;
+
+		if (start >= total)
+			break;
+
+		std::size_t end = start;
+
+		while (end + 1 < total && keep[end + 1])
+			++end;
+
+		std::size_t old_line = 1;
+		std::size_t new_line = 1;
+
+		for (std::size_t k = 0; k < start; ++k)
+		{
+			if (diff[k].tag != '+') ++old_line;
+			if (diff[k].tag != '-') ++new_line;
+		}
+
+		std::size_t old_count = 0;
+		std::size_t new_count = 0;
+
+		for (std::size_t k = start; k <= end; ++k)
+		{
+			if (diff[k].tag != '+') ++old_count;
+			if (diff[k].tag != '-') ++new_count;
+		}
+
+		out += "@@ -" + std::to_string(old_line) + "," + std::to_string(old_count)
+			+ " +" + std::to_string(new_line) + "," + std::to_string(new_count) + " @@\n";
+
+		for (std::size_t k = start; k <= end; ++k)
+		{
+			out += diff[k].tag;
+			out += diff[k].text.s_str();
+			out += '\n';
+		}
+
+		start = end + 1;
+	}
+
+	return cppString(std::move(out));
+}

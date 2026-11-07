@@ -51,6 +51,11 @@ namespace sp
 		// integrity checks and content addressing.
 		cppString sha256(const cppString& data);             // 32 raw digest bytes
 		cppString sha256_hex(const cppString& data);         // 64 lowercase hex digits
+
+		// HMAC-SHA-256 (RFC 2104). Keys longer than the 64-byte block size
+		// are hashed first; short keys are zero-padded.
+		cppString hmac_sha256(const cppString& key, const cppString& message);
+		cppString hmac_sha256_hex(const cppString& key, const cppString& message);
 	}
 }
 
