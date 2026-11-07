@@ -183,7 +183,7 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (640+ assertions) from a VS developer prompt:
+To build and run the test suite (648 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
@@ -216,7 +216,7 @@ Project1/Project1/
 ├── unicode.h / .cpp     # case folding, width, transliteration, NFC/NFD
 ├── fmt.h / .cpp         # type-safe text formatting
 ├── ansi.h / .cpp        # ANSI/terminal escape helpers
-└── testCppString.cpp    # 640+ assertion test suite
+└── testCppString.cpp    # 648 assertion test suite
 ```
 
 ## License
