@@ -4,12 +4,12 @@ A modern C++23 string utility library — a `std::string`-compatible core class
 (`sp::cppString`) plus a collection of focused helper modules for UTF-8,
 encoding, data exchange (JSON / CSV / INI / URI), internationalization,
 validation, paths, checksums, versioning, formatting, terminal output,
-binary parsing, and everyday text work.
+binary parsing, file system operations, and everyday text work.
 
 一个现代 C++23 字符串工具库：与 `std::string` 对齐的核心类 `sp::cppString`，
 外加 UTF-8、编解码、数据交换（JSON / CSV / INI / URI）、国际化处理、
 校验、路径、哈希、语义化版本、格式化、终端输出、二进制解析、
-文本处理等一系列独立模块。
+文件系统操作、文本处理等一系列独立模块。
 
 ## Features
 
@@ -114,6 +114,30 @@ Out-of-bounds reads throw `Index_Out_Of_Range`, malformed data throws
 签名匹配、对齐与越界检查；`Writer` 可链式写回，`pack<T>()` 打包单个值。
 越界抛 `Index_Out_Of_Range`，格式错误抛 `Invalid_Conversion`。
 
+### `file.h` — `sp::file`
+
+Full file-system layer on top of `std::filesystem` (UTF-8 paths survive the
+round trip). Queries: `exists` / `is_regular_file` / `is_directory` /
+`is_empty` / `equivalent` / `equals`, metadata (`size`, `last_modified` in
+Unix seconds, `size_string`, `filename` / `stem` / `extension`), path
+resolution (`absolute` / `canonical` / `weakly_canonical` / `relative`,
+`current_path`, `temp_directory`, `home_directory`). Lifecycle:
+`create_directory(s)`, `remove` / `remove_all`, `copy` / `move` with overwrite,
+`touch`, `truncate`. Content: `read_text` / `write_text` / `append_text`,
+`read_lines` / `write_lines` (CRLF aware), `read_bytes` / `write_bytes`,
+`read_chunk`, `for_each_line`, `write_text_atomic`. Directory `list` returns
+sorted `Entry` records (optional recursive) and `find` filters by extension.
+`hash()` integrates the checksum module (md5 / sha256 / crc32 / adler32 /
+fnv1a64). Queries never throw; filesystem failures are reported as
+`Invalid_Operation` (or `false` from lifecycle helpers).
+
+基于 `std::filesystem` 的完整文件操作层（UTF-8 路径无损）：存在性 / 类型判断、
+大小与修改时间、文件名 / 扩展名、绝对路径 / 规范化 / 相对路径 / 工作目录、
+创建删除复制移动、`touch` / `truncate`、文本与字节读写、逐行读写（兼容 CRLF）、
+分块读取、逐行回调、临时文件 + rename 的原子写、目录遍历与按扩展名查找，
+以及复用 checksum 模块的文件哈希。查询函数不抛异常；文件系统错误统一为
+`Invalid_Operation`（生命周期类函数返回 `false`）。
+
 ### `table.h` — `sp::table`
 
 ASCII table rendering with per-column alignment. Column widths use
@@ -177,6 +201,7 @@ plus `bump_major` / `bump_minor` / `bump_patch`.
 #include "fmt.h"
 #include "ansi.h"
 #include "binary.h"
+#include "file.h"
 
 using namespace sp;
 
@@ -207,6 +232,11 @@ auto magic = r.u16();               // 0x4D5A
 auto name  = r.cstring();           // "cppString"
 auto count = r.varint();            // 300
 cppString dump = binary::hex_dump(w.data());
+
+file::write_text("notes.txt", cppString{"first\nsecond\n"});
+auto lines = file::read_lines("notes.txt");   // {"first", "second"}
+cppString digest = file::hash("notes.txt", "sha256");
+for (const auto& e : file::list(".")) { /* sorted entries with size/type */ }
 ```
 
 ## Building
@@ -215,13 +245,13 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (767 assertions) from a VS developer prompt:
+To build and run the test suite (859 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
    path.cpp checksum.cpp validate.cpp semver.cpp json.cpp table.cpp ^
    argparse.cpp csv.cpp ini.cpp url.cpp unicode.cpp fmt.cpp ansi.cpp ^
-   binary.cpp testCppString.cpp
+   binary.cpp file.cpp testCppString.cpp
 testCppString.exe
 ```
 
@@ -249,7 +279,8 @@ Project1/Project1/
 ├── fmt.h / .cpp         # type-safe text formatting
 ├── ansi.h / .cpp        # ANSI/terminal escape helpers
 ├── binary.h / .cpp      # raw byte parsing: Reader/Writer, hex dump, bit ops
-└── testCppString.cpp    # 767 assertion test suite
+├── file.h / .cpp        # filesystem ops: metadata, dirs, text/byte I/O, hashes
+└── testCppString.cpp    # 859 assertion test suite
 ```
 
 ## License
