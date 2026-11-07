@@ -56,6 +56,25 @@ namespace sp
 		// characters count as 2, combining marks and control characters
 		// as 0, everything else as 1.
 		std::size_t display_width(const cppString& s);
+
+		enum class Alignment
+		{
+			Left,
+			Center,
+			Right
+		};
+
+		// Truncate to at most max_width display columns, never splitting a
+		// UTF-8 character. When text is cut, suffix is reserved inside
+		// max_width and appended (an ellipsis is the usual choice). If the
+		// suffix itself is wider than max_width, it is omitted.
+		cppString truncate_by_width(const cppString& s, std::size_t max_width,
+			const cppString& suffix = cppString{});
+
+		// Pad to a minimum display width. Returns s unchanged when it is
+		// already at least that wide. fill must be a single-byte character.
+		cppString pad_by_width(const cppString& s, std::size_t width,
+			Alignment align = Alignment::Left, char fill = ' ');
 	}
 }
 

@@ -132,6 +132,15 @@ namespace sp
 		// A Null patch member removes the key; objects merge recursively;
 		// any other patch value replaces the target value.
 		Value merge(Value target, const Value& patch);
+
+		// RFC 6902 JSON Patch applied to a copy of document. Operations are
+		// executed in order: add / remove / replace / move / copy / test.
+		// Each op is an object with string "op" and "path"; "value" is
+		// required for add/replace/test and "from" for move/copy.
+		// Throws Invalid_Conversion on a malformed operation, and
+		// Invalid_Operation / Index_Out_Of_Range when a path cannot be
+		// resolved or a "test" comparison fails.
+		Value patch(Value document, const Value& operations);
 	}
 }
 

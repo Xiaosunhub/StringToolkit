@@ -3,11 +3,12 @@
 A modern C++23 string utility library — a `std::string`-compatible core class
 (`sp::cppString`) plus a collection of focused helper modules for UTF-8,
 encoding, data exchange (JSON / CSV / INI / URI), internationalization,
-validation, paths, checksums, versioning, and everyday text work.
+validation, paths, checksums, versioning, formatting, terminal output,
+and everyday text work.
 
 一个现代 C++23 字符串工具库：与 `std::string` 对齐的核心类 `sp::cppString`，
 外加 UTF-8、编解码、数据交换（JSON / CSV / INI / URI）、国际化处理、
-校验、路径、哈希、语义化版本、文本处理等一系列独立模块。
+校验、路径、哈希、语义化版本、格式化、终端输出、文本处理等一系列独立模块。
 
 ## Features
 
@@ -27,7 +28,8 @@ validation, paths, checksums, versioning, and everyday text work.
 
 Strict validation (rejects truncation, overlongs, surrogates, > U+10FFFF),
 codepoint-length, char-indexed substring, per-character split, codepoint
-encode/decode, char-aware reverse, terminal `display_width` (CJK = 2 columns).
+encode/decode, char-aware reverse, terminal `display_width` (CJK = 2 columns),
+plus `truncate_by_width` / `pad_by_width` that never split a character.
 
 ### `coding.h` — `sp::coding`
 
@@ -41,8 +43,8 @@ Full JSON (RFC 8259): a `Value` variant type (null / bool / number / string /
 array / object, insertion-ordered objects), a strict recursive-descent
 `parse` with byte-position error messages, and `dump` in compact or
 pretty-printed form. Round-trip safe: `parse(x.dump()) == x`.
-Also RFC 6901 JSON Pointer (`pointer` / `set_pointer`) and RFC 7386 JSON
-Merge Patch (`merge`).
+Also RFC 6901 JSON Pointer (`pointer` / `set_pointer`), RFC 7386 JSON
+Merge Patch (`merge`) and RFC 6902 JSON Patch (`patch`, all six operations).
 
 ### `csv.h` — `sp::csv`
 
@@ -50,7 +52,8 @@ Full RFC 4180 documents: `Document` with an optional header row, named
 column access, `parse` (quoted separators, doubled quotes, embedded
 newlines, CRLF handling), delimiter auto-detection, and `write` with
 configurable quoting and line endings. Extends the single-line
-`csv::escape` / `csv::split` helpers in `method.h`.
+`csv::escape` / `csv::split` helpers in `method.h`. `to_json` / `from_json`
+convert between documents and JSON object/array forms (lossless round trip).
 
 ### `ini.h` — `sp::ini`
 
@@ -73,6 +76,20 @@ Latin Extended-A, Greek, Cyrillic), `to_fullwidth` / `to_halfwidth`,
 `transliterate` (Latin diacritics, ligatures, Greek and Cyrillic → ASCII),
 and `decompose` / `compose` (NFD-like / NFC-like for precomposed Latin).
 Curated tables, not a full UCD implementation.
+
+### `fmt.h` — `sp::fmt`
+
+Type-safe `format("{} / {1} / {{escaped}}", ...)` with positional and indexed
+arguments, alignment / fill / zero-padding, integer bases (`d`, `x`, `X`, `b`,
+`o` with `#` prefixes), float precision (`f`, `e`, `g`), signs, and string
+precision (UTF-8 aware). Bad syntax or a mismatched spec throws a typed
+exception. Argument conversion is header-only; parsing lives in the library.
+
+### `ansi.h` — `sp::ansi`
+
+Terminal escape-sequence helpers: `strip`, `has_ansi`, `visible_width`
+(CJK-aware), width-based `truncate` / `pad` that preserve SGR codes, and
+`style` / `fg` / `rgb` / `bold` / `underline` / `inverse` / `reset` builders.
 
 ### `table.h` — `sp::table`
 
@@ -115,7 +132,8 @@ only), SHA-256 and HMAC-SHA-256 — raw bytes and hex forms.
 
 `is_ipv4`, `is_ipv6` (with `::` compression and embedded IPv4 tails),
 `is_email`, `is_uuid`, `is_url`, `is_mac_address`, `is_hex_color`,
-`is_luhn`, `is_ascii`, `is_strong_password`.
+`is_luhn`, `is_ascii`, `is_strong_password`, `is_iban` (mod-97),
+`is_jwt`, `is_base64`, `is_hostname`, `is_json`, `is_date` (calendar-valid).
 
 ### `semver.h` — `sp::semver`
 
@@ -133,6 +151,8 @@ plus `bump_major` / `bump_minor` / `bump_patch`.
 #include "json.h"
 #include "csv.h"
 #include "url.h"
+#include "fmt.h"
+#include "ansi.h"
 
 using namespace sp;
 
@@ -152,6 +172,9 @@ auto doc  = csv::parse(cppString{"name,age\nAda,36\n"});
 auto cell = doc.get(0, "age");     // "36"
 auto uri  = url::Url{"https://example.com/a/b?q=1"};
 auto next = uri.resolve("../c");   // "https://example.com/a/c"
+
+cppString line = fmt::format("{:>8} {:#x} {:.2f}", "id", 255, 3.14159);
+cppString safe = ansi::truncate(ansi::bold(cjk), 6);  // width-safe, style closed
 ```
 
 ## Building
@@ -160,12 +183,13 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (567 assertions) from a VS developer prompt:
+To build and run the test suite (640+ assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
    path.cpp checksum.cpp validate.cpp semver.cpp json.cpp table.cpp ^
-   argparse.cpp csv.cpp ini.cpp url.cpp unicode.cpp testCppString.cpp
+   argparse.cpp csv.cpp ini.cpp url.cpp unicode.cpp fmt.cpp ansi.cpp ^
+   testCppString.cpp
 testCppString.exe
 ```
 
@@ -190,7 +214,9 @@ Project1/Project1/
 ├── ini.h / .cpp         # INI configuration files
 ├── url.h / .cpp         # RFC 3986 URI parsing and resolution
 ├── unicode.h / .cpp     # case folding, width, transliteration, NFC/NFD
-└── testCppString.cpp    # 567 assertion test suite
+├── fmt.h / .cpp         # type-safe text formatting
+├── ansi.h / .cpp        # ANSI/terminal escape helpers
+└── testCppString.cpp    # 640+ assertion test suite
 ```
 
 ## License

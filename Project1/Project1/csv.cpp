@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #include "csv.h"
+#include "json.h"
 #include <algorithm>
 
 namespace
@@ -329,4 +330,121 @@ sp::cppString sp::csv::write_rows(const std::vector<Document::Row>& rows,
 	Document doc;
 	doc.rows() = rows;
 	return write(doc, delimiter, false, line_ending);
+}
+
+// ---- JSON interop (5.1) ----
+
+namespace
+{
+	sp::cppString cell_of(const sp::json::Value& value)
+	{
+		if (value.is_null())
+			return sp::cppString{};
+
+		if (value.is_string())
+			return value.as_string();
+
+		return value.dump();
+	}
+}
+
+sp::json::Value sp::csv::to_json(const Document& doc, bool named)
+{
+	sp::json::Value result;
+	auto& array = result.array_items();
+
+	if (named && doc.has_header())
+	{
+		for (const auto& row : doc.rows())
+		{
+			sp::json::Value record;
+			auto& object = record.object_items();
+
+			for (std::size_t i = 0; i < doc.header().size(); ++i)
+			{
+				const cppString cell = i < row.size() ? row[i] : cppString{};
+				object.emplace_back(doc.header()[i], sp::json::Value{ cell });
+			}
+
+			array.push_back(std::move(record));
+		}
+
+		return result;
+	}
+
+	if (doc.has_header())
+		array.push_back(sp::json::Value{ sp::json::Value::array_t{
+			doc.header().begin(), doc.header().end() } });
+
+	for (const auto& row : doc.rows())
+		array.push_back(sp::json::Value{ sp::json::Value::array_t{ row.begin(), row.end() } });
+
+	return result;
+}
+
+sp::csv::Document sp::csv::from_json(const sp::json::Value& value, bool named)
+{
+	if (!value.is_array())
+		throw sp::Invalid_Conversion("csv::from_json expects a JSON array.");
+
+	Document doc;
+
+	if (named)
+	{
+		Document::Row header;
+
+		// Collect the union of all keys, preserving first-seen order.
+		for (const auto& record : value.as_array())
+		{
+			if (!record.is_object())
+				throw sp::Invalid_Conversion("csv::from_json(named) expects an array of objects.");
+
+			for (const auto& entry : record.as_object())
+			{
+				if (std::find(header.begin(), header.end(), entry.first) == header.end())
+					header.push_back(entry.first);
+			}
+		}
+
+		if (!header.empty())
+			doc.set_header(std::move(header));
+
+		for (const auto& record : value.as_array())
+		{
+			Document::Row row;
+			row.reserve(doc.header().size());
+
+			for (const auto& column : doc.header())
+				row.push_back(cell_of(record[column]));
+
+			doc.add_row(std::move(row));
+		}
+
+		return doc;
+	}
+
+	bool first = true;
+
+	for (const auto& row_value : value.as_array())
+	{
+		if (!row_value.is_array())
+			throw sp::Invalid_Conversion("csv::from_json expects an array of arrays.");
+
+		Document::Row row;
+
+		for (const auto& cell : row_value.as_array())
+			row.push_back(cell_of(cell));
+
+		if (first)
+		{
+			doc.set_header(std::move(row));
+			first = false;
+		}
+		else
+		{
+			doc.add_row(std::move(row));
+		}
+	}
+
+	return doc;
 }

@@ -1,4 +1,5 @@
 #include "validate.h"
+#include "json.h"
 
 namespace
 {
@@ -360,4 +361,255 @@ bool sp::validate::is_strong_password(const cppString& s) noexcept
 	}
 
 	return lower && upper && digit && symbol;
+}
+
+// ---- additional format validators (5.1) ----
+
+namespace
+{
+	bool v_is_digit(char c) noexcept
+	{
+		return c >= '0' && c <= '9';
+	}
+
+	bool v_is_upper(char c) noexcept
+	{
+		return c >= 'A' && c <= 'Z';
+	}
+
+	bool v_is_lower(char c) noexcept
+	{
+		return c >= 'a' && c <= 'z';
+	}
+
+	bool v_is_alnum(char c) noexcept
+	{
+		return v_is_digit(c) || v_is_upper(c) || v_is_lower(c);
+	}
+
+	bool v_is_base64url(char c) noexcept
+	{
+		return v_is_alnum(c) || c == '-' || c == '_';
+	}
+
+	int v_base64_value(char c) noexcept
+	{
+		if (c >= 'A' && c <= 'Z') return c - 'A';
+		if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+		if (c >= '0' && c <= '9') return c - '0' + 52;
+		if (c == '+') return 62;
+		if (c == '/') return 63;
+		return -1;
+	}
+
+	bool v_is_leap(int year) noexcept
+	{
+		return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+	}
+}
+
+bool sp::validate::is_iban(const cppString& s) noexcept
+{
+	String compact;
+	compact.reserve(s.s_str().size());
+
+	for (char c : s.s_str())
+	{
+		if (c == ' ')
+			continue;
+
+		if (v_is_lower(c))
+			c = static_cast<char>(c - 'a' + 'A');
+
+		compact += c;
+	}
+
+	if (compact.size() < 15 || compact.size() > 34)
+		return false;
+
+	if (!v_is_upper(compact[0]) || !v_is_upper(compact[1]))
+		return false;
+
+	if (!v_is_digit(compact[2]) || !v_is_digit(compact[3]))
+		return false;
+
+	for (std::size_t i = 4; i < compact.size(); ++i)
+	{
+		if (!v_is_alnum(compact[i]))
+			return false;
+	}
+
+	// Move the country code and check digits to the end, expand letters
+	// (A=10 .. Z=35) and verify the mod-97 remainder equals 1.
+	const String rearranged = compact.substr(4) + compact.substr(0, 4);
+	int remainder = 0;
+
+	for (const char c : rearranged)
+	{
+		if (v_is_digit(c))
+			remainder = (remainder * 10 + (c - '0')) % 97;
+		else
+			remainder = (remainder * 100 + (c - 'A' + 10)) % 97;
+	}
+
+	return remainder == 1;
+}
+
+bool sp::validate::is_jwt(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+	std::size_t segments = 0;
+	std::size_t start = 0;
+
+	while (true)
+	{
+		const std::size_t dot = src.find('.', start);
+		const std::size_t end = dot == String::npos ? src.size() : dot;
+
+		if (end == start)
+			return false;
+
+		for (std::size_t i = start; i < end; ++i)
+		{
+			if (!v_is_base64url(src[i]))
+				return false;
+		}
+
+		++segments;
+
+		if (dot == String::npos)
+			break;
+
+		start = dot + 1;
+	}
+
+	return segments == 3;
+}
+
+bool sp::validate::is_base64(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	if (src.empty() || src.size() % 4 != 0)
+		return false;
+
+	std::size_t padding = 0;
+
+	while (padding < 2 && src[src.size() - 1 - padding] == '=')
+		++padding;
+
+	const std::size_t body = src.size() - padding;
+
+	if (body == 0)
+		return false;
+
+	for (std::size_t i = 0; i < body; ++i)
+	{
+		if (v_base64_value(src[i]) < 0)
+			return false;
+	}
+
+	if (padding != 0)
+	{
+		const int last = v_base64_value(src[body - 1]);
+		const int unused_bits = (1 << (padding * 2)) - 1;
+
+		if ((last & unused_bits) != 0)
+			return false;
+	}
+
+	return true;
+}
+
+bool sp::validate::is_hostname(const cppString& s) noexcept
+{
+	String text = s.s_str();
+
+	if (text.empty())
+		return false;
+
+	if (text.back() == '.')
+		text.pop_back();
+
+	if (text.empty() || text.size() > 253)
+		return false;
+
+	std::size_t start = 0;
+
+	while (true)
+	{
+		const std::size_t dot = text.find('.', start);
+		const std::size_t end = dot == String::npos ? text.size() : dot;
+		const std::size_t length = end - start;
+
+		if (length == 0 || length > 63)
+			return false;
+
+		for (std::size_t i = start; i < end; ++i)
+		{
+			if (!v_is_alnum(text[i]) && text[i] != '-')
+				return false;
+		}
+
+		if (text[start] == '-' || text[end - 1] == '-')
+			return false;
+
+		if (dot == String::npos)
+			break;
+
+		start = dot + 1;
+	}
+
+	return true;
+}
+
+bool sp::validate::is_json(const cppString& s) noexcept
+{
+	try
+	{
+		(void)sp::json::parse(s);
+		return true;
+	}
+	catch (...)
+	{
+		return false;
+	}
+}
+
+bool sp::validate::is_date(const cppString& s) noexcept
+{
+	const String& src = s.s_str();
+
+	if (src.size() != 10)
+		return false;
+
+	for (std::size_t i = 0; i < src.size(); ++i)
+	{
+		if (i == 4 || i == 7)
+		{
+			if (src[i] != '-')
+				return false;
+		}
+		else if (!v_is_digit(src[i]))
+		{
+			return false;
+		}
+	}
+
+	const int year = (src[0] - '0') * 1000 + (src[1] - '0') * 100
+		+ (src[2] - '0') * 10 + (src[3] - '0');
+	const int month = (src[5] - '0') * 10 + (src[6] - '0');
+	const int day = (src[8] - '0') * 10 + (src[9] - '0');
+
+	if (month < 1 || month > 12)
+		return false;
+
+	static const int days_in_month[] =
+	{
+		0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+	};
+
+	const int maximum = (month == 2 && v_is_leap(year)) ? 29 : days_in_month[month];
+
+	return day >= 1 && day <= maximum;
 }

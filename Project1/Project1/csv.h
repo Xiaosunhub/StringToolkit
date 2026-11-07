@@ -28,6 +28,8 @@
 
 namespace sp
 {
+	namespace json { class Value; }
+
 	// Full RFC 4180 document support. This extends the single-line
 	// helpers sp::csv::escape / sp::csv::split declared in method.h.
 	namespace csv
@@ -92,6 +94,19 @@ namespace sp
 			char delimiter = '\0');
 		[[nodiscard]] cppString write_rows(const std::vector<Document::Row>& rows,
 			char delimiter = ',', const cppString& line_ending = "\r\n");
+
+		// ---- JSON interop ----
+		// Cells are always JSON strings, so a to_json -> from_json round trip
+		// is lossless. With named=true and a header, to_json produces an array
+		// of objects keyed by the header; otherwise it produces an array of
+		// arrays (the header row included first when present).
+		[[nodiscard]] json::Value to_json(const Document& doc, bool named = true);
+
+		// Inverse of to_json. with named=true the first object's keys become
+		// the header (in order); keys appearing only in later rows extend it.
+		// Non-string values are serialized with json::Value::dump; Null becomes
+		// an empty cell. Throws Invalid_Conversion on an unexpected shape.
+		[[nodiscard]] Document from_json(const json::Value& value, bool named = true);
 	}
 }
 

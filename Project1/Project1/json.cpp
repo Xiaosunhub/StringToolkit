@@ -852,3 +852,228 @@ sp::json::Value sp::json::merge(Value target, const Value& patch)
 
 	return target;
 }
+
+// ---- JSON Patch (RFC 6902) ----
+
+namespace
+{
+	using sp::json::Value;
+
+	Value& descend(Value& node, const String& token)
+	{
+		if (node.is_array())
+		{
+			std::size_t index = 0;
+
+			if (!parse_index(token, index) || index >= node.as_array().size())
+				throw sp::Invalid_Operation("JSON Patch: array token not found: " + token);
+
+			return node.array_items()[index];
+		}
+
+		if (node.is_object())
+		{
+			for (auto& entry : node.object_items())
+			{
+				if (entry.first == sp::cppString{ token })
+					return entry.second;
+			}
+
+			throw sp::Invalid_Operation("JSON Patch: object key not found: " + token);
+		}
+
+		throw sp::Invalid_Operation("JSON Patch: cannot traverse a scalar value.");
+	}
+
+	struct Location
+	{
+		Value* parent = nullptr;   // nullptr denotes the whole document
+		String token;
+	};
+
+	Location locate(Value& root, const String& path)
+	{
+		const auto tokens = pointer_tokens(path);
+
+		if (tokens.empty())
+			return {};
+
+		Value* current = &root;
+
+		for (std::size_t i = 0; i + 1 < tokens.size(); ++i)
+			current = &descend(*current, tokens[i]);
+
+		return { current, tokens.back() };
+	}
+
+	void add_at(Value& root, const String& path, Value value)
+	{
+		if (path.empty())
+		{
+			root = std::move(value);
+			return;
+		}
+
+		const Location loc = locate(root, path);
+		Value& parent = *loc.parent;
+
+		if (parent.is_array())
+		{
+			auto& array = parent.array_items();
+
+			if (loc.token == "-")
+			{
+				array.push_back(std::move(value));
+				return;
+			}
+
+			std::size_t index = 0;
+
+			if (!parse_index(loc.token, index) || index > array.size())
+				throw sp::Invalid_Operation("JSON Patch add: invalid array index.");
+
+			array.insert(array.begin() + static_cast<std::ptrdiff_t>(index), std::move(value));
+			return;
+		}
+
+		if (!parent.is_object() && !parent.is_null())
+			throw sp::Invalid_Operation("JSON Patch add: parent is not an object.");
+
+		auto& object = parent.object_items();
+
+		for (auto& entry : object)
+		{
+			if (entry.first == sp::cppString{ loc.token })
+			{
+				entry.second = std::move(value);
+				return;
+			}
+		}
+
+		object.emplace_back(sp::cppString{ loc.token }, std::move(value));
+	}
+
+	void remove_at(Value& root, const String& path)
+	{
+		if (path.empty())
+		{
+			root = Value{};
+			return;
+		}
+
+		const Location loc = locate(root, path);
+		Value& parent = *loc.parent;
+
+		if (parent.is_array())
+		{
+			std::size_t index = 0;
+
+			if (!parse_index(loc.token, index))
+				throw sp::Invalid_Operation("JSON Patch remove: non-numeric array token.");
+
+			auto& array = parent.array_items();
+
+			if (index >= array.size())
+				throw sp::Index_Out_Of_Range("JSON Patch remove: array index out of range.");
+
+			array.erase(array.begin() + static_cast<std::ptrdiff_t>(index));
+			return;
+		}
+
+		if (!parent.is_object())
+			throw sp::Invalid_Operation("JSON Patch remove: parent is not an object.");
+
+		auto& object = parent.object_items();
+
+		for (std::size_t i = 0; i < object.size(); ++i)
+		{
+			if (object[i].first == sp::cppString{ loc.token })
+			{
+				object.erase(object.begin() + static_cast<std::ptrdiff_t>(i));
+				return;
+			}
+		}
+
+		throw sp::Invalid_Operation("JSON Patch remove: path not found.");
+	}
+
+	bool is_descendant_path(const String& path, const String& from) noexcept
+	{
+		return path.size() > from.size()
+			&& path.compare(0, from.size(), from) == 0
+			&& path[from.size()] == '/';
+	}
+}
+
+sp::json::Value sp::json::patch(Value document, const Value& operations)
+{
+	if (!operations.is_array())
+		throw Invalid_Conversion("JSON Patch must be an array of operation objects.");
+
+	for (const Value& op : operations.as_array())
+	{
+		if (!op.is_object())
+			throw Invalid_Conversion("Every JSON Patch operation must be an object.");
+
+		if (!op.contains("op") || !op["op"].is_string()
+			|| !op.contains("path") || !op["path"].is_string())
+		{
+			throw Invalid_Conversion("JSON Patch operation needs string 'op' and 'path'.");
+		}
+
+		const String name = op["op"].as_string().s_str();
+		const String path = op["path"].as_string().s_str();
+
+		if (name == "add" || name == "replace" || name == "test")
+		{
+			if (!op.contains("value"))
+				throw Invalid_Conversion("JSON Patch '" + name + "' needs a 'value'.");
+
+			if (name == "test")
+			{
+				const Value& actual = pointer(document, sp::cppString{ path });
+
+				if (!(actual == op["value"]))
+					throw Invalid_Operation("JSON Patch test failed at " + path);
+			}
+			else if (name == "replace")
+			{
+				(void)pointer(document, sp::cppString{ path }); // must already exist
+				set_pointer(document, sp::cppString{ path }, op["value"]);
+			}
+			else
+			{
+				add_at(document, path, op["value"]);
+			}
+		}
+		else if (name == "remove")
+		{
+			(void)pointer(document, sp::cppString{ path }); // must already exist
+			remove_at(document, path);
+		}
+		else if (name == "move" || name == "copy")
+		{
+			if (!op.contains("from") || !op["from"].is_string())
+				throw Invalid_Conversion("JSON Patch '" + name + "' needs a 'from' path.");
+
+			const String from = op["from"].as_string().s_str();
+			Value taken = pointer(document, sp::cppString{ from });
+
+			if (name == "move")
+			{
+				if (is_descendant_path(path, from))
+					throw Invalid_Operation("JSON Patch move: cannot move a value into its own child.");
+
+				remove_at(document, from);
+			}
+
+			add_at(document, path, std::move(taken));
+		}
+		else
+		{
+			throw Invalid_Conversion("Unknown JSON Patch operation: " + name);
+		}
+	}
+
+	return document;
+}

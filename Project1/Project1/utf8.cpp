@@ -290,3 +290,69 @@ std::size_t sp::utf8::display_width(const cppString& s)
 
 	return width;
 }
+
+// ---- display-width helpers (5.1) ----
+
+sp::cppString sp::utf8::truncate_by_width(const cppString& s, std::size_t max_width,
+	const cppString& suffix)
+{
+	const auto characters = chars(s);
+	const std::size_t suffix_width = display_width(suffix);
+	const bool fits = !suffix.empty() && suffix_width <= max_width;
+	const std::size_t budget = fits ? max_width - suffix_width : max_width;
+
+	String out;
+	std::size_t width = 0;
+	bool cut = false;
+
+	for (const auto& character : characters)
+	{
+		const std::size_t w = display_width(character);
+
+		if (width + w > budget)
+		{
+			cut = true;
+			break;
+		}
+
+		out += character.s_str();
+		width += w;
+	}
+
+	if (cut && fits)
+		out += suffix.s_str();
+
+	return cppString(std::move(out));
+}
+
+sp::cppString sp::utf8::pad_by_width(const cppString& s, std::size_t width,
+	Alignment align, char fill)
+{
+	const std::size_t current = display_width(s);
+
+	if (current >= width)
+		return s;
+
+	const std::size_t padding = width - current;
+	std::size_t left = 0;
+	std::size_t right = 0;
+
+	if (align == Alignment::Left)
+	{
+		right = padding;
+	}
+	else if (align == Alignment::Center)
+	{
+		left = padding / 2;
+		right = padding - left;
+	}
+	else
+	{
+		left = padding;
+	}
+
+	String out(left, fill);
+	out += s.s_str();
+	out += String(right, fill);
+	return cppString(std::move(out));
+}

@@ -63,6 +63,31 @@ namespace sp
 		// At least 8 characters containing a lowercase letter, an uppercase
 		// letter, a digit and a non-alphanumeric symbol (all ASCII).
 		bool is_strong_password(const cppString& s) noexcept;
+
+		// IBAN with the ISO 13616 mod-97 check digit. Spaces are ignored and
+		// case is folded; length 15..34, two country letters + two check digits.
+		bool is_iban(const cppString& s) noexcept;
+
+		// Three non-empty dot-separated base64url segments (header.payload.
+		// signature). Only the shape is checked, not the signature.
+		bool is_jwt(const cppString& s) noexcept;
+
+		// Canonical RFC 4648 base64: length a multiple of 4, correct '='
+		// padding and zero unused trailing bits. URL-safe '-'/'_' and
+		// unpadded forms are NOT accepted.
+		bool is_base64(const cppString& s) noexcept;
+
+		// RFC 1123 hostname: up to 253 characters, dot-separated labels of
+		// 1..63 alphanumeric/hyphen characters, no leading or trailing '-'.
+		// A single trailing dot is allowed; IP literals are not special-cased.
+		bool is_hostname(const cppString& s) noexcept;
+
+		// True when json::parse accepts the text as a complete JSON document.
+		bool is_json(const cppString& s) noexcept;
+
+		// Calendar-valid ISO 8601 date "YYYY-MM-DD" (leap years included).
+		// No time component, timezone or week dates.
+		bool is_date(const cppString& s) noexcept;
 	}
 }
 
