@@ -32,6 +32,16 @@
 #include <string>
 #include <string_view>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace
@@ -304,6 +314,12 @@ namespace sp
 			{
 				const auto source = to_path(from);
 				const auto target = to_path(to);
+
+				// Never let the "overwrite" cleanup delete the source itself.
+				std::error_code same;
+				if (fs::equivalent(source, target, same) && !same)
+					return false;
+
 				if (!fs::exists(source))
 					return false;
 				if (fs::exists(target))
@@ -328,6 +344,13 @@ namespace sp
 			{
 				const auto source = to_path(from);
 				const auto target = to_path(to);
+
+				// Renaming a path onto itself is a no-op; with overwrite=true
+				// the old code removed the source before renaming it.
+				std::error_code same;
+				if (fs::equivalent(source, target, same) && !same)
+					return false;
+
 				if (!fs::exists(source))
 					return false;
 				if (fs::exists(target))
@@ -495,16 +518,23 @@ namespace sp
 			try
 			{
 				write_all(temporary, text.s_str(), false);
+				const auto source = to_path(temporary);
 				const auto target = to_path(path);
-				std::error_code ec;
-				if (fs::exists(target, ec))
-					fs::remove(target, ec);
-				if (ec)
-					throw sp::Invalid_Operation("sp::file::write_text_atomic: cannot replace destination");
 
-				fs::rename(to_path(temporary), target, ec);
+#ifdef _WIN32
+				// std::filesystem::rename cannot replace an existing file on
+				// Windows. Deleting the destination first leaves a window where
+				// the file is missing, and a failed rename permanently loses the
+				// original content. MoveFileExW swaps in one atomic step.
+				if (!MoveFileExW(source.c_str(), target.c_str(),
+					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+					throw sp::Invalid_Operation("sp::file::write_text_atomic: rename failed");
+#else
+				std::error_code ec;
+				fs::rename(source, target, ec);
 				if (ec)
 					throw sp::Invalid_Operation("sp::file::write_text_atomic: rename failed");
+#endif
 			}
 			catch (...)
 			{
@@ -578,15 +608,20 @@ namespace sp
 		cppString hash(const cppString& path, const cppString& algorithm)
 		{
 			const cppString name = algorithm.copyLower();
+
+			// Validate before touching the filesystem: an unknown algorithm
+			// must report Invalid_Argument even when the file does not exist.
+			if (name != "md5" && name != "sha256" && name != "crc32"
+				&& name != "adler32" && name != "fnv1a64")
+				throw sp::Invalid_Argument("sp::file::hash: unknown algorithm");
+
 			const cppString data{ read_bytes(path) };
 
 			if (name == "md5")      return sp::checksum::md5_hex(data);
 			if (name == "sha256")   return sp::checksum::sha256_hex(data);
 			if (name == "crc32")    return sp::checksum::crc32_hex(data);
 			if (name == "adler32")  return sp::checksum::adler32_hex(data);
-			if (name == "fnv1a64")  return sp::checksum::fnv1a64_hex(data);
-
-			throw sp::Invalid_Argument("sp::file::hash: unknown algorithm");
+			return sp::checksum::fnv1a64_hex(data);
 		}
 	}
 }

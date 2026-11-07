@@ -21,15 +21,27 @@
 #include "binary.h"
 #include <algorithm>
 #include <bit>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 namespace
 {
 	constexpr char HEX_LOWER[] = "0123456789abcdef";
 	constexpr char HEX_UPPER[] = "0123456789ABCDEF";
+
+	// Narrow std::string paths are interpreted in the active ANSI code page on
+	// Windows, which breaks non-ASCII file names. Build a wide UTF-8 aware
+	// filesystem path instead (same convention as sp::file).
+	std::filesystem::path to_path(const sp::cppString& value)
+	{
+		const ::String& text = value.s_str();
+		return std::filesystem::path{ std::u8string_view{
+			reinterpret_cast<const char8_t*>(text.data()), text.size() } };
+	}
 
 	unsigned char byte_at(const ::String& s, std::size_t i) noexcept
 	{
@@ -434,7 +446,7 @@ namespace sp
 
 		String load_file(const cppString& path)
 		{
-			std::ifstream input{ path.s_str(), std::ios::binary };
+			std::ifstream input{ to_path(path), std::ios::binary };
 			if (!input)
 				throw sp::Invalid_Operation("binary::load_file: cannot open file for reading");
 
@@ -446,7 +458,7 @@ namespace sp
 
 		void save_file(const cppString& path, const String& bytes)
 		{
-			std::ofstream output{ path.s_str(), std::ios::binary | std::ios::trunc };
+			std::ofstream output{ to_path(path), std::ios::binary | std::ios::trunc };
 			if (!output)
 				throw sp::Invalid_Operation("binary::save_file: cannot open file for writing");
 

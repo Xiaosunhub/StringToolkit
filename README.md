@@ -11,6 +11,9 @@ binary parsing, file system operations, and everyday text work.
 校验、路径、哈希、语义化版本、格式化、终端输出、二进制解析、
 文件系统操作、文本处理等一系列独立模块。
 
+当前版本：`5.3.1`（缺陷修复版本）。
+Current release: **5.3.1** — bug-fix update.
+
 ## Features
 
 ### Core class — `sp::cppString` (`cppString.h`)
@@ -245,7 +248,7 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (859 assertions) from a VS developer prompt:
+To build and run the test suite (875 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
@@ -255,12 +258,20 @@ cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
 testCppString.exe
 ```
 
-Or open `Project1.slnx` in Visual Studio and press F5.
+Or open the local `Project1.slnx` in Visual Studio and press F5
+(`testCppString.cpp` is a local-only test harness, not published).
 
 ## Repository layout
 
+The repository root is flat: every published source is a `.h` / `.cpp` pair at
+the top level. The local `Project1/` Visual Studio workspace (project/solution
+files, IDE settings, test harness, `release.bat`) is **never committed**; the
+release script mirrors the library sources into the root before each push.
+
+仓库根目录为扁平结构，只发布头文件与实现。本地 `Project1/`（VS 工程、解决方案、
+测试文件、`release.bat`）不入库，发布脚本会在每次推送前把库源码同步到根目录。
+
 ```
-Project1/Project1/
 ├── cppString.h / .cpp   # core class
 ├── utf8.h / .cpp        # UTF-8 validation & manipulation, display width
 ├── coding.h / .cpp      # base64/base32/base58/hex/binary/octal/url, radix, ciphers, morse
@@ -280,8 +291,13 @@ Project1/Project1/
 ├── ansi.h / .cpp        # ANSI/terminal escape helpers
 ├── binary.h / .cpp      # raw byte parsing: Reader/Writer, hex dump, bit ops
 ├── file.h / .cpp        # filesystem ops: metadata, dirs, text/byte I/O, hashes
-└── testCppString.cpp    # 859 assertion test suite
+├── README.md
+├── LICENSE
+└── .gitignore
 ```
+
+The 875-assertion test suite (`testCppString.cpp`) is used by the local build
+gate but is intentionally kept out of the published repository.
 
 ## License
 
