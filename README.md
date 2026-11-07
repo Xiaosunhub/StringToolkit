@@ -4,11 +4,12 @@ A modern C++23 string utility library — a `std::string`-compatible core class
 (`sp::cppString`) plus a collection of focused helper modules for UTF-8,
 encoding, data exchange (JSON / CSV / INI / URI), internationalization,
 validation, paths, checksums, versioning, formatting, terminal output,
-and everyday text work.
+binary parsing, and everyday text work.
 
 一个现代 C++23 字符串工具库：与 `std::string` 对齐的核心类 `sp::cppString`，
 外加 UTF-8、编解码、数据交换（JSON / CSV / INI / URI）、国际化处理、
-校验、路径、哈希、语义化版本、格式化、终端输出、文本处理等一系列独立模块。
+校验、路径、哈希、语义化版本、格式化、终端输出、二进制解析、
+文本处理等一系列独立模块。
 
 ## Features
 
@@ -91,6 +92,28 @@ Terminal escape-sequence helpers: `strip`, `has_ansi`, `visible_width`
 (CJK-aware), width-based `truncate` / `pad` that preserve SGR codes, and
 `style` / `fg` / `rgb` / `bold` / `underline` / `inverse` / `reset` builders.
 
+### `binary.h` — `sp::binary`
+
+Raw byte parsing built around `sp::String` buffers (embedded NUL bytes are
+safe). `to_hex` / `from_hex` (with `0x`, `:` and whitespace tolerant input),
+`to_bits` / `from_bits`, a classic `hex_dump` with ASCII sidebar, `printable`,
+bit-level helpers (`get_bit` / `set_bit` / `popcount` / `reverse_bits`,
+`bit_and` / `bit_or` / `bit_xor` / `bit_not`, byte swaps), pattern scanning
+(`find` / `find_all` / `split` / `slice`) and binary-mode `load_file` /
+`save_file`. `Reader` is a cursor parser for u8/i8 → u64/i64, f32/f64 in
+either byte order (per-call override supported), `peek` / `bytes` / `rest`,
+`cstring` / `line` / `read_until`, LEB128 `varint` and zig-zag `svarint`,
+`match` / `skip_to` signatures, `seek` / `skip` / `align` with bounds checks.
+`Writer` is its chainable counterpart, and `pack<T>()` wraps single values.
+Out-of-bounds reads throw `Index_Out_Of_Range`, malformed data throws
+`Invalid_Conversion`.
+
+原始字节解析，缓冲区用 `sp::String`（可含 `\0`）：hex / bit 文本互转、
+`hex_dump`、可见化、位运算与字节序交换、模式查找与切片、二进制文件读写。
+`Reader` 提供大小端整数 / 浮点、varint / svarint、C 字符串、行读取、
+签名匹配、对齐与越界检查；`Writer` 可链式写回，`pack<T>()` 打包单个值。
+越界抛 `Index_Out_Of_Range`，格式错误抛 `Invalid_Conversion`。
+
 ### `table.h` — `sp::table`
 
 ASCII table rendering with per-column alignment. Column widths use
@@ -153,6 +176,7 @@ plus `bump_major` / `bump_minor` / `bump_patch`.
 #include "url.h"
 #include "fmt.h"
 #include "ansi.h"
+#include "binary.h"
 
 using namespace sp;
 
@@ -175,6 +199,14 @@ auto next = uri.resolve("../c");   // "https://example.com/a/c"
 
 cppString line = fmt::format("{:>8} {:#x} {:.2f}", "id", 255, 3.14159);
 cppString safe = ansi::truncate(ansi::bold(cjk), 6);  // width-safe, style closed
+
+binary::Writer w;
+w.u16(0x4D5A).cstring(String{"cppString"}).varint(300);
+binary::Reader r{w.data()};
+auto magic = r.u16();               // 0x4D5A
+auto name  = r.cstring();           // "cppString"
+auto count = r.varint();            // 300
+cppString dump = binary::hex_dump(w.data());
 ```
 
 ## Building
@@ -183,13 +215,13 @@ Requires a C++23 compiler (developed with MSVC v145 / VS 2026, `/std:c++latest`)
 The library is plain `.h` / `.cpp` pairs — add them to your project and go.
 No third-party dependencies; Windows targets link nothing extra.
 
-To build and run the test suite (648 assertions) from a VS developer prompt:
+To build and run the test suite (767 assertions) from a VS developer prompt:
 
 ```
 cl /std:c++latest /EHsc /W3 cppString.cpp method.cpp utf8.cpp coding.cpp ^
    path.cpp checksum.cpp validate.cpp semver.cpp json.cpp table.cpp ^
    argparse.cpp csv.cpp ini.cpp url.cpp unicode.cpp fmt.cpp ansi.cpp ^
-   testCppString.cpp
+   binary.cpp testCppString.cpp
 testCppString.exe
 ```
 
@@ -216,7 +248,8 @@ Project1/Project1/
 ├── unicode.h / .cpp     # case folding, width, transliteration, NFC/NFD
 ├── fmt.h / .cpp         # type-safe text formatting
 ├── ansi.h / .cpp        # ANSI/terminal escape helpers
-└── testCppString.cpp    # 648 assertion test suite
+├── binary.h / .cpp      # raw byte parsing: Reader/Writer, hex dump, bit ops
+└── testCppString.cpp    # 767 assertion test suite
 ```
 
 ## License
